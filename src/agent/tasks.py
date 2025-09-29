@@ -8,21 +8,25 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableConfig
 from pydantic import BaseModel, Field
+from agent.prompts import PROFILE_INFORMATION_PROMPT
+import config
+from langchain_core.messages import AIMessage
 
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 
-config = RunnableConfig(max_retries=3, retry_delay=2, stop=["\n\n"])
+#config = RunnableConfig(max_retries=3, retry_delay=2, stop=["\n\n"])
 
 
 class ProfileInformation(BaseModel):
-    age: int = Field(description="The age of the user")
-    interests: List[str] = Field(description="The interests of the user")
-    competencies: List[str] = Field(description="The competencies of the user")
-    personal_characteristics: List[str] = Field(description="The personal characteristics of the user")
-    is_locally_focused: bool = Field(description="Whether the user is focused on local opportunities")
-    desired_job_characteristics: List[str] = Field(description="The job characteristics the user is looking for")
+    age: int | None = Field(default=None, description="The age of the user")
+    interests: List[str] | None = Field(default=None, description="The interests of the user")
+    competencies: List[str] | None = Field(default=None, description="The competencies of the user")
+    personal_characteristics: List[str] | None = Field(default=None, description="The personal characteristics of the user")
+    is_locally_focused: bool | None = Field(default=None, description="Whether the user is focused on local opportunities")
+    desired_job_characteristics: List[str] | None = Field(default=None, description="The job characteristics the user is looking for")
 
-    def to_prompt_string(self) -> str:
+
+    def get_attribute_with_values(self) -> str:
         """
         Generate a formatted string representation of the profile information
         that can be used as input to a prompt.
@@ -32,7 +36,7 @@ class ProfileInformation(BaseModel):
         """
         lines = []
         
-        for field_name, field_info in self.model_fields.items():
+        for field_name, field_info in self.__class__.model_fields.items():
             value = getattr(self, field_name)
             description = field_info.description or field_name.replace('_', ' ').title()
             
@@ -46,7 +50,7 @@ class ProfileInformation(BaseModel):
                 if value:
                     formatted_value = ", ".join(str(item) for item in value)
                 else:
-                    formatted_value = "None specified"
+                    formatted_value = None
             else:
                 formatted_value = str(value)
             
@@ -54,37 +58,84 @@ class ProfileInformation(BaseModel):
         
         return "\n".join(lines)
 
+    def get_field_descriptions(self) -> str:
+        """
+        Generate a simple field name and description list.
+        
+        Returns:
+            str: A formatted string with field names and descriptions
+        """
+        lines = []
+        
+        for field_name, field_info in self.__class__.model_fields.items():
+            lines.append(f'- "{field_name}": {field_info.description}')
+
+        return "\n".join(lines)
+    
+
+class ProfileQuestions(BaseModel):
+    answer: str = Field(description="A helpful answer to the user's input based on their profile")
+    follow_up_questions: List[str] | None = Field(default=None, description="Follow-up questions to clarify the user's profile")
+
 
 def get_current_profile_information(state: OverallState) -> ProfileInformation:
     return ProfileInformation(
-        age=state["age"],
-        interests=state["interests"],
-        competencies=state["competencies"],
-        personal_characteristics=state["personal_characteristics"],
-        is_locally_focused=state["is_locally_focused"],
-        job_characteristics=state["job_characteristics"]
+        age=state.get("age"),  # Default to 0 if not present
+        interests=state.get("interests", []),
+        competencies=state.get("competencies", []),
+        personal_characteristics=state.get("personal_characteristics", []),
+        is_locally_focused=state.get("is_locally_focused"),
+        job_characteristics=state.get("job_characteristics", [])
     )
     
 
 
-def add_profile_information(state: OverallState) -> ProfileState:
+def extract_profile_information(state: OverallState) -> OverallState:
     messages = state["messages"]
-    last_messages = state["messages"][-1]
-
-    current_profile_info = get_current_profile_information(state)
-
-
-
-if __name__ == "__main__":
     
-
-    profile = ProfileInformation(
-        age=30,
-        interests=["reading", "traveling"],
-        competencies=["Python", "Data Analysis"],
-        personal_characteristics=["curious", "adaptable"],
-        is_locally_focused=True,
-        desired_job_characteristics=["remote work", "flexible hours"]
+    # Extract and format user messages
+    user_messages = []
+    for msg in messages:
+        if hasattr(msg, 'content'):
+            if msg.__class__.__name__ == "HumanMessage":
+                user_messages.append(f"User: {msg.content}")
+            elif msg.__class__.__name__ == "AIMessage":
+                user_messages.append(f"Assistant: {msg.content}")
+        else:
+            # Handle string messages (from initial state)
+            user_messages.append(f"User: {str(msg)}")
+    
+    user_input_text = "\n".join(user_messages) if user_messages else "No previous conversation"
+    current_profile_info = get_current_profile_information(state)
+    
+    # 1. Get structured output for profile extraction
+    structured_llm = llm.with_structured_output(ProfileInformation)
+    formatted_prompt = PROFILE_INFORMATION_PROMPT.format(
+        fields=current_profile_info.get_field_descriptions(),
+        user_input=user_input_text,
+        current_profile_information=current_profile_info.get_attribute_with_values()
     )
-
-    a = 10
+    structured_response = structured_llm.invoke(formatted_prompt)
+    
+    # 2. Get conversational response
+    chat_prompt = f"""
+    Based on the user's input and the profile information you've extracted, provide a helpful response to the user.
+    Be empathetic and ask any follow-up questions if needed.
+    
+    User Input: {user_input_text}
+    
+    User Profile Information:
+    {current_profile_info.get_attribute_with_values()}
+    """
+    
+    chat_response = llm.invoke(chat_prompt)
+    
+    return {
+        "messages": [AIMessage(content=chat_response.content)],
+        "age": structured_response.age if structured_response.age is not None else state.get("age"),
+        "interests": structured_response.interests if structured_response.interests is not None else state.get("interests", []),
+        "competencies": structured_response.competencies if structured_response.competencies is not None else state.get("competencies", []),
+        "personal_characteristics": structured_response.personal_characteristics if structured_response.personal_characteristics is not None else state.get("personal_characteristics", []),
+        "job_characteristics": structured_response.desired_job_characteristics if structured_response.desired_job_characteristics is not None else state.get("job_characteristics", []),
+        "is_locally_focused": structured_response.is_locally_focused if structured_response.is_locally_focused is not None else state.get("is_locally_focused")
+    }

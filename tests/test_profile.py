@@ -14,7 +14,7 @@ def test_to_prompt_string():
         desired_job_characteristics=["remote work", "good work-life balance"]
     )
     
-    prompt_string = profile.to_prompt_string()
+    prompt_string = profile.get_attribute_with_values()
     
     # Test that all expected fields are present
     assert "Age: 25" in prompt_string
@@ -23,3 +23,5 @@ def test_to_prompt_string():
     assert "Personal Characteristics: analytical, creative" in prompt_string
     assert "Is Locally Focused: No" in prompt_string
     assert "Desired Job Characteristics: remote work, good work-life balance" in prompt_string
+
+
