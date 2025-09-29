@@ -1,6 +1,6 @@
 from agent.state import (
     OverallState,
-    ProfileState
+    ProfilingState
 )
 from typing import List
 
@@ -8,7 +8,10 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableConfig
 from pydantic import BaseModel, Field
-from agent.prompts import PROFILE_INFORMATION_PROMPT
+from agent.prompts import (
+    PROFILE_INFORMATION_PROMPT,
+    FOLLOW_UP_QUESTION_PROMPT
+)
 import config
 from langchain_core.messages import AIMessage
 
@@ -16,16 +19,9 @@ llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 
 #config = RunnableConfig(max_retries=3, retry_delay=2, stop=["\n\n"])
 
-
-class ProfileInformation(BaseModel):
-    age: int | None = Field(default=None, description="The age of the user")
-    interests: List[str] | None = Field(default=None, description="The interests of the user")
-    competencies: List[str] | None = Field(default=None, description="The competencies of the user")
-    personal_characteristics: List[str] | None = Field(default=None, description="The personal characteristics of the user")
-    is_locally_focused: bool | None = Field(default=None, description="Whether the user is focused on local opportunities")
-    desired_job_characteristics: List[str] | None = Field(default=None, description="The job characteristics the user is looking for")
-
-
+class ProfileStateModel(BaseModel):
+    pass
+    
     def get_attribute_with_values(self) -> str:
         """
         Generate a formatted string representation of the profile information
@@ -71,11 +67,24 @@ class ProfileInformation(BaseModel):
             lines.append(f'- "{field_name}": {field_info.description}')
 
         return "\n".join(lines)
+
+
+class ProfileInformation(ProfileStateModel):
+    age: int | None = Field(default=None, description="The age of the user")
+    interests: List[str] | None = Field(default=None, description="The interests of the user")
+    competencies: List[str] | None = Field(default=None, description="The competencies of the user")
+    personal_characteristics: List[str] | None = Field(default=None, description="The personal characteristics of the user")
+    is_locally_focused: bool | None = Field(default=None, description="Whether the user is focused on local opportunities")
+    desired_job_characteristics: List[str] | None = Field(default=None, description="The job characteristics the user is looking for")
+    is_profile_complete: bool | None = Field(description="Whether the profile is complete")
+
     
 
-class ProfileQuestions(BaseModel):
+class ProfileQuestions(ProfileStateModel):
     answer: str = Field(description="A helpful answer to the user's input based on their profile")
-    follow_up_questions: List[str] | None = Field(default=None, description="Follow-up questions to clarify the user's profile")
+    questions: List[str] | None = Field(default=None, description="Follow-up questions to clarify the user's profile")
+
+
 
 
 def get_current_profile_information(state: OverallState) -> ProfileInformation:
@@ -85,12 +94,13 @@ def get_current_profile_information(state: OverallState) -> ProfileInformation:
         competencies=state.get("competencies", []),
         personal_characteristics=state.get("personal_characteristics", []),
         is_locally_focused=state.get("is_locally_focused"),
-        job_characteristics=state.get("job_characteristics", [])
+        job_characteristics=state.get("job_characteristics", []),
+        is_profile_complete=state.get("is_profile_complete")
     )
     
 
 
-def extract_profile_information(state: OverallState) -> OverallState:
+def extract_profile_information(state: OverallState) -> ProfilingState:
     messages = state["messages"]
     
     # Extract and format user messages
@@ -116,26 +126,44 @@ def extract_profile_information(state: OverallState) -> OverallState:
         current_profile_information=current_profile_info.get_attribute_with_values()
     )
     structured_response = structured_llm.invoke(formatted_prompt)
+
+    # Check if profile is complete by verifying no null values
+    profile_dict = structured_response.model_dump()
+    if any(value is None for value in profile_dict.values()):
+        has_null_values = True
+        message = "Profile information is incomplete, further questions are needed. Generating questions..."
+    else:
+        has_null_values = False
+        message = "Profile information extracted successfully."
     
-    # 2. Get conversational response
-    chat_prompt = f"""
-    Based on the user's input and the profile information you've extracted, provide a helpful response to the user.
-    Be empathetic and ask any follow-up questions if needed.
-    
-    User Input: {user_input_text}
-    
-    User Profile Information:
-    {current_profile_info.get_attribute_with_values()}
-    """
-    
-    chat_response = llm.invoke(chat_prompt)
-    
+    # Update the structured response with completeness check
+    structured_response.is_profile_complete = not has_null_values
+
     return {
-        "messages": [AIMessage(content=chat_response.content)],
+        "messages": [AIMessage(content=message)],
         "age": structured_response.age if structured_response.age is not None else state.get("age"),
         "interests": structured_response.interests if structured_response.interests is not None else state.get("interests", []),
         "competencies": structured_response.competencies if structured_response.competencies is not None else state.get("competencies", []),
         "personal_characteristics": structured_response.personal_characteristics if structured_response.personal_characteristics is not None else state.get("personal_characteristics", []),
         "job_characteristics": structured_response.desired_job_characteristics if structured_response.desired_job_characteristics is not None else state.get("job_characteristics", []),
-        "is_locally_focused": structured_response.is_locally_focused if structured_response.is_locally_focused is not None else state.get("is_locally_focused")
+        "is_locally_focused": structured_response.is_locally_focused if structured_response.is_locally_focused is not None else state.get("is_locally_focused"),
+        "do_profiling": not structured_response.is_profile_complete
+    }
+
+def ask_profile_questions(state: ProfilingState) -> OverallState:
+
+    structured_llm = llm.with_structured_output(ProfileQuestions)
+    current_profile_info = get_current_profile_information(state)
+
+    formatted_prompt = FOLLOW_UP_QUESTION_PROMPT.format(
+        fields=current_profile_info.get_field_descriptions(),
+        current_profile_information=current_profile_info.get_attribute_with_values()
+    )
+
+    structured_response = structured_llm.invoke(formatted_prompt)
+
+
+    return {
+        "messages": [AIMessage(content=structured_response.answer)],
+        "profile_questions": structured_response.questions,
     }
