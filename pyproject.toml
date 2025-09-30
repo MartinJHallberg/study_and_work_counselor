@@ -17,6 +17,8 @@ langchain-core = "^0.3.76"
 pydantic = "^2.11.9"
 pytest = "^8.4.2"
 ruff = "^0.13.2"
+streamlit = "^1.38.0"
+python-dotenv = "^1.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
