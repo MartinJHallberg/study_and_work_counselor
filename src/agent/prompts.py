@@ -42,3 +42,17 @@ FOLLOW_UP_QUESTION_PROMPT = (
     {current_profile_information}
     """
 )
+
+JOB_RECOMMENDATIONS_PROMPT = BASE_ROLE + """
+    Instructions:
+    - Based on the user's profile information, recommend suitable job roles that align with their characteristics and preferences.
+    - Suggest at least 10 job roles that fit the user's profile.
+    - Be mindful of including a wide range of job roles that match different aspects of the user's profile
+    - Do not rule out any job due to competencies, focus more on interests and personal characteristics
+    - Provide a brief description of each recommended job role and explain why it is a good match for the user's profile.
+    - Provide a list of educational paths or qualifications that would be beneficial for each recommended job role.
+    - Provide a summary of the personal profile and how it relates to the recommended job roles.
+
+    Profile Information:
+    {current_profile_information}
+    """
