@@ -14,6 +14,16 @@ poetry install
 OPENAI_API_KEY=sk-your-actual-key-here
 ```
 
+### Project Structure
+
+```
+app/
+├── streamlit_app.py    # Main entry point
+├── layout.py          # App layout and structure
+├── helpers.py         # Core functionality and utilities
+└── controls.py        # UI components and sidebar controls
+```
+
 ### Running the CLI (original)
 ```
 poetry run python src/main.py
@@ -25,11 +35,14 @@ poetry run streamlit run app/streamlit_app.py
 ```
 
 Features:
-- Chat interface
-- Profiling stage (collects and refines profile information)
-- Job recommendation stage (after profiling completes or forced via sidebar)
-- Sidebar snapshot of extracted profile fields
-- Ability to reset conversation/state
+- **Modular Architecture**: Split into layout, helpers, and controls
+- **Three-column Layout**: Left navigation, main chat, right step details
+- **Chat Interface**: Interactive conversation with the AI agent
+- **Profiling Stage**: Collects and refines profile information with progress tracking
+- **Job Recommendation Stage**: Generates and displays job matches
+- **Profile Snapshot**: Real-time view of collected information
+- **Step-specific Guidance**: Contextual tips and information
+- **Conversation Reset**: Clear state and start over
 
 ### Next Steps / Ideas
 - Stream responses token-by-token
