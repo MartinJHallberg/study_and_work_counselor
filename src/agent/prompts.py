@@ -13,9 +13,6 @@ PROFILE_INFORMATION_PROMPT = (
     - Use the user's input together with the profile information to fill out and update the profile fields accurately.
     - Ensure that the profile is comprehensive and reflects the user's characteristics.
 
-    Format your answer with all these fields filled out as best as possible:
-    {fields}
-
     Conversation History:
     {user_input}
 
@@ -34,9 +31,6 @@ FOLLOW_UP_QUESTION_PROMPT = (
     per field that is incomplete or unclear.
     - Ask open questions that encourage the user to provide detailed responses.
     - If the profile is complete, provide a helpful response to the user based on their input.
-
-    Format your answer as a JSON object with the following fields:
-    {fields}
 
     Current Profile Information:
     {current_profile_information}

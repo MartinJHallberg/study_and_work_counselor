@@ -1,9 +1,21 @@
 from agent.tasks import (
-    get_job_recommendations
+    get_job_recommendations,
+    extract_profile_information,
 )
 from agent.state import (
+    OverallState,
     ProfilingState
 )
+
+def test_extract_profile_information_with_minimal_input():
+    state = OverallState(
+        messages=["I like math, I am social and interested in arts."],
+    )
+
+    result = extract_profile_information(state)
+
+    assert result["interests"] is not None
+    assert result["personal_characteristics"] is not None
 
 
 def test_get_job_recommendations_with_complete_profile():

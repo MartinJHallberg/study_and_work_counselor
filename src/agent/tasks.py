@@ -59,11 +59,9 @@ def extract_profile_information(state: OverallState) -> ProfilingState:
     user_input_text = get_conversation_history(state)
     current_profile_info = get_current_profile_information(state)
 
-    # 1. Get structured output for profile extraction
     llm = get_llm()  # Get LLM when needed
     structured_llm = llm.with_structured_output(ProfileInformation)
     formatted_prompt = PROFILE_INFORMATION_PROMPT.format(
-        fields=current_profile_info.get_field_descriptions(),
         user_input=user_input_text,
         current_profile_information=current_profile_info.get_attribute_with_values(),
     )
@@ -99,7 +97,6 @@ def ask_profile_questions(state: ProfilingState) -> OverallState:
     current_profile_info = get_current_profile_information(state)
 
     formatted_prompt = FOLLOW_UP_QUESTION_PROMPT.format(
-        fields=current_profile_info.get_field_descriptions(),
         current_profile_information=current_profile_info.get_attribute_with_values(),
     )
 
