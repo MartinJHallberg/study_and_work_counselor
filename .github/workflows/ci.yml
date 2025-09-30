@@ -12,7 +12,6 @@ jobs:
       matrix:
         python-version: [3.12]
 
-    
     steps:
     - uses: actions/checkout@v4
 
@@ -28,7 +27,7 @@ jobs:
         virtualenvs-create: true
         virtualenvs-in-project: true
     
-        - name: Install dependencies
+    - name: Install dependencies
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
       run: poetry install --no-interaction --no-root
 
