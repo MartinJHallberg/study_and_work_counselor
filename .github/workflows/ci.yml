@@ -33,4 +33,4 @@ jobs:
       run: poetry run ruff format --check src tests
 
     - name: Run tests
-      run: poetry run pytest
+      run: poetry run pytest -m "not llm_call"
