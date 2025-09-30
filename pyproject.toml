@@ -13,6 +13,7 @@ langchain-community = "^0.3.29"
 langchain-openai = "^0.3.33"
 jupyter = "^1.1.1"
 pyppeteer = "^2.0.0"
+ruff = "^0.13.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
