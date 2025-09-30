@@ -9,6 +9,7 @@ def test_to_prompt_string():
         personal_characteristics=["analytical", "creative"],
         is_locally_focused=False,
         desired_job_characteristics=["remote work", "good work-life balance"],
+        is_profile_complete=True,
     )
 
     prompt_string = profile.get_attribute_with_values()
@@ -18,8 +19,9 @@ def test_to_prompt_string():
     assert "Interests: programming, music, hiking" in prompt_string
     assert "Competencies: Python, JavaScript, SQL" in prompt_string
     assert "Personal Characteristics: analytical, creative" in prompt_string
-    assert "Is Locally Focused: No" in prompt_string
+    assert "Is Locally Focused: False" in prompt_string
     assert (
         "Desired Job Characteristics: remote work, good work-life balance"
         in prompt_string
     )
+    assert "Is Profile Complete: True" in prompt_string

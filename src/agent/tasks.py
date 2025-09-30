@@ -30,10 +30,7 @@ class ProfileStateModel(BaseModel):
             # Format the field name to be more human-readable
             display_name = field_name.replace("_", " ").title()
 
-            # Format the value based on its type
-            if isinstance(value, bool):
-                formatted_value = "Yes" if value else "No"
-            elif isinstance(value, list):
+            if isinstance(value, list):
                 if value:
                     formatted_value = ", ".join(str(item) for item in value)
                 else:
