@@ -14,7 +14,6 @@ from langchain_core.messages import AIMessage
 
 
 def get_llm():
-
     return ChatOpenAI(model="gpt-4o-mini", temperature=0)
 
 
