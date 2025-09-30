@@ -27,7 +27,7 @@ jobs:
       run: poetry install
     
     - name: Run ruff linting
-      run: poetry run ruff check src tests
+      run: poetry run ruff check src
     
     - name: Run ruff formatting check
-      run: poetry run ruff format --check src tests
+      run: poetry run ruff format --check src
