@@ -23,6 +23,8 @@ def init_state():
         st.session_state.stage = "profiling"  # or 'recommendation'
     if "pending_questions" not in st.session_state:
         st.session_state.pending_questions = []
+    if "processing" not in st.session_state:
+        st.session_state.processing = False
 
 
 def check_api_key():
@@ -81,13 +83,20 @@ def stream_user_input(user_input: str):
                 st.session_state.stage = "job_recommendation"
 
     # Update chat history for display (convert to simple role/content)
-    st.session_state.chat_history = []
+    # Don't clear existing chat_history since user message was already added
+    # Only rebuild if we don't have the current user message
+    current_chat_length = len(st.session_state.chat_history)
+    
+    # Rebuild chat history from graph state
+    new_chat_history = []
     for msg in state.get("messages", []):
         if isinstance(msg, HumanMessage):
-            st.session_state.chat_history.append({"role": "user", "content": msg.content})
+            new_chat_history.append({"role": "user", "content": msg.content})
         elif isinstance(msg, AIMessage):
-            st.session_state.chat_history.append({"role": "assistant", "content": msg.content})
-
+            new_chat_history.append({"role": "assistant", "content": msg.content})
+    
+    # Update session state chat history
+    st.session_state.chat_history = new_chat_history
     st.session_state.graph_state = state
 
 

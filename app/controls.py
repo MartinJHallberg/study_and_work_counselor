@@ -17,44 +17,7 @@ def left_sidebar_controls():
         st.session_state.stage = "job_recommendation"
         st.session_state.graph_state["do_profiling"] = False
 
-    st.divider()
-    st.subheader("Profile Snapshot")
-    snapshot_fields = [
-        "age",
-        "interests",
-        "competencies",
-        "personal_characteristics",
-        "job_characteristics",
-        "is_locally_focused",
-    ]
     
-    # Always show all fields, even if null/empty
-    for f in snapshot_fields:
-        val = st.session_state.graph_state.get(f)
-        
-        # Format the value for display
-        if val is None:
-            formatted_val = "*Not set*"
-        elif isinstance(val, list):
-            if val:
-                formatted_val = ", ".join(str(item) for item in val)
-            else:
-                formatted_val = "*Not set*"
-        elif isinstance(val, bool):
-            formatted_val = "Yes" if val else "No"
-        elif val == "":
-            formatted_val = "*Not set*"
-        else:
-            formatted_val = str(val)
-        
-        st.write(f"**{f.replace('_', ' ').title()}:** {formatted_val}")
-
-    if st.session_state.pending_questions:
-        st.divider()
-        st.subheader("Pending Questions")
-        for q in st.session_state.pending_questions:
-            st.write("- " + q)
-
     st.divider()
     if st.button("Reset Conversation"):
         for key in ["graph_state", "chat_history", "stage", "pending_questions"]:
@@ -63,11 +26,7 @@ def left_sidebar_controls():
         st.experimental_rerun()
 
 
-def right_sidebar_controls():
-    """Right sidebar with step-specific information and details."""
-    st.header("Step Details")
-    
-    if st.session_state.stage == "profiling":
+def get_profile_sidebar():
         st.subheader("📋 Profiling Information")
         st.write("**Current Focus:** Building your profile")
         
@@ -96,28 +55,40 @@ def right_sidebar_controls():
         progress = filled_fields / len(profile_fields)
         st.metric("Profile Completeness", f"{progress:.1%}", f"{filled_fields}/{len(profile_fields)} fields")
         st.progress(progress)
-        
+
+
+def get_job_recommendation_sidebar():
+    st.subheader("💼 Job Recommendations")
+    st.write("**Current Focus:** Generating job matches")
+    
+    st.markdown("""
+    **Based on your profile, we're finding:**
+    - Suitable job roles that match your interests
+    - Required skills and competencies
+    - Educational pathways
+    - Career development suggestions
+    """)
+    
+    # Show recommendation summary if available
+    job_roles = st.session_state.graph_state.get("job_role", [])
+    if job_roles:
+        st.metric("Recommended Roles", len(job_roles))
+        st.markdown("**Top Recommendations:**")
+        for role in job_roles[:3]:
+            st.write(f"• {role}")
+        if len(job_roles) > 3:
+            st.write(f"... and {len(job_roles) - 3} more")
+
+
+def right_sidebar_controls():
+    """Right sidebar with step-specific information and details."""
+    st.header("Step Details")
+    
+    if st.session_state.stage == "profiling":
+        get_profile_sidebar()
+
     elif st.session_state.stage == "job_recommendation":
-        st.subheader("💼 Job Recommendations")
-        st.write("**Current Focus:** Generating job matches")
-        
-        st.markdown("""
-        **Based on your profile, we're finding:**
-        - Suitable job roles that match your interests
-        - Required skills and competencies
-        - Educational pathways
-        - Career development suggestions
-        """)
-        
-        # Show recommendation summary if available
-        job_roles = st.session_state.graph_state.get("job_role", [])
-        if job_roles:
-            st.metric("Recommended Roles", len(job_roles))
-            st.markdown("**Top Recommendations:**")
-            for role in job_roles[:3]:
-                st.write(f"• {role}")
-            if len(job_roles) > 3:
-                st.write(f"... and {len(job_roles) - 3} more")
+        get_job_recommendation_sidebar()
         
     # Common help section
     st.divider()
