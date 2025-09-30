@@ -103,7 +103,7 @@ def ask_profile_questions(state: ProfilingState) -> OverallState:
     structured_response = structured_llm.invoke(formatted_prompt)
 
     return {
-        "messages": [AIMessage(content=structured_response.answer)],
+        "messages": [AIMessage(content=structured_response.message)],
         "profile_questions": structured_response.questions,
     }
 

@@ -70,8 +70,8 @@ class ProfileInformation(StateModel):
 
 
 class ProfileQuestions(StateModel):
-    answer: str | None = Field(
-        description="A helpful answer to the user's input based on their profile"
+    message: str | None = Field(
+        description="A helpful message to summarise what information that is missing from the profile"
     )
     questions: List[str] | None = Field(
         default=None, description="Follow-up questions to clarify the user's profile"

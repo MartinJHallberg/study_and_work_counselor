@@ -30,7 +30,6 @@ FOLLOW_UP_QUESTION_PROMPT = (
     - If you need more information, generate a list of follow-up questions to ask the user. Ask one question
     per field that is incomplete or unclear.
     - Ask open questions that encourage the user to provide detailed responses.
-    - If the profile is complete, provide a helpful response to the user based on their input.
 
     Current Profile Information:
     {current_profile_information}
