@@ -149,24 +149,12 @@ def extract_profile_information(state: OverallState) -> ProfilingState:
 
     return {
         "messages": [AIMessage(content=message)],
-        "age": structured_response.age
-        if structured_response.age is not None
-        else state.get("age"),
-        "interests": structured_response.interests
-        if structured_response.interests is not None
-        else state.get("interests", []),
-        "competencies": structured_response.competencies
-        if structured_response.competencies is not None
-        else state.get("competencies", []),
-        "personal_characteristics": structured_response.personal_characteristics
-        if structured_response.personal_characteristics is not None
-        else state.get("personal_characteristics", []),
-        "job_characteristics": structured_response.desired_job_characteristics
-        if structured_response.desired_job_characteristics is not None
-        else state.get("job_characteristics", []),
-        "is_locally_focused": structured_response.is_locally_focused
-        if structured_response.is_locally_focused is not None
-        else state.get("is_locally_focused"),
+        "age": structured_response.age,
+        "interests": structured_response.interests,
+        "competencies": structured_response.competencies,
+        "personal_characteristics": structured_response.personal_characteristics,
+        "job_characteristics": structured_response.desired_job_characteristics,
+        "is_locally_focused": structured_response.is_locally_focused,
         "do_profiling": not structured_response.is_profile_complete,
     }
 
