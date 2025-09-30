@@ -5,14 +5,11 @@ from agent.state import (
 from typing import List
 
 from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import RunnableConfig
 from pydantic import BaseModel, Field
 from agent.prompts import (
     PROFILE_INFORMATION_PROMPT,
     FOLLOW_UP_QUESTION_PROMPT
 )
-import config
 from langchain_core.messages import AIMessage
 
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
@@ -34,7 +31,6 @@ class ProfileStateModel(BaseModel):
         
         for field_name, field_info in self.__class__.model_fields.items():
             value = getattr(self, field_name)
-            description = field_info.description or field_name.replace('_', ' ').title()
             
             # Format the field name to be more human-readable
             display_name = field_name.replace('_', ' ').title()
@@ -97,10 +93,9 @@ def get_current_profile_information(state: OverallState) -> ProfileInformation:
         job_characteristics=state.get("job_characteristics", []),
         is_profile_complete=state.get("is_profile_complete")
     )
-    
 
 
-def extract_profile_information(state: OverallState) -> ProfilingState:
+def get_conversation_history(state: OverallState) -> str:
     messages = state["messages"]
     
     # Extract and format user messages
@@ -115,7 +110,15 @@ def extract_profile_information(state: OverallState) -> ProfilingState:
             # Handle string messages (from initial state)
             user_messages.append(f"User: {str(msg)}")
     
-    user_input_text = "\n".join(user_messages) if user_messages else "No previous conversation"
+    return "\n".join(user_messages) if user_messages else "No previous conversation"
+    
+
+
+def extract_profile_information(state: OverallState) -> ProfilingState:
+    messages = state["messages"]
+    
+    # Extract and format user messages
+    user_input_text = get_conversation_history(state)
     current_profile_info = get_current_profile_information(state)
     
     # 1. Get structured output for profile extraction

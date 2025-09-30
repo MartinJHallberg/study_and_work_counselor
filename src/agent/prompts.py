@@ -5,7 +5,9 @@ BASE_ROLE = """
     You are tasked with creating a profile based on the user's input.
     """
 
-PROFILE_INFORMATION_PROMPT = BASE_ROLE + """
+PROFILE_INFORMATION_PROMPT = (
+    BASE_ROLE
+    + """
 
     Instructions:
     - Use the user's input together with the profile information to fill out and update the profile fields accurately.
@@ -20,8 +22,11 @@ PROFILE_INFORMATION_PROMPT = BASE_ROLE + """
     Current Profile Information:
     {current_profile_information}
     """
+)
 
-FOLLOW_UP_QUESTION_PROMPT = BASE_ROLE + """
+FOLLOW_UP_QUESTION_PROMPT = (
+    BASE_ROLE
+    + """
     Instructions:
     - Based on the user's input and the profile information you've extracted, assess
     whether you have enough information to create a comprehensive profile.
@@ -36,3 +41,4 @@ FOLLOW_UP_QUESTION_PROMPT = BASE_ROLE + """
     Current Profile Information:
     {current_profile_information}
     """
+)
