@@ -1,25 +1,21 @@
-name: CI Pipeline
+name: CI
 
 on:
   pull_request:
-    branches:
-      - main
+    branches: [ master ]
 
 jobs:
-  test:
+  lint:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.12]
-
+    
     steps:
     - uses: actions/checkout@v4
-
-    - name: Set up Python ${{ matrix.python-version }}
+    
+    - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
-
+        python-version: '3.12'
+    
     - name: Install Poetry
       uses: snok/install-poetry@v1
       with:
@@ -28,13 +24,10 @@ jobs:
         virtualenvs-in-project: true
     
     - name: Install dependencies
-      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      run: poetry install --no-interaction --no-root
-
-    - name: Install project
-      run: poetry install --no-interaction
-
-    - name: Run linting with Ruff
-      run: |
-        poetry run ruff check src tests
-        poetry run ruff format --check src tests
+      run: poetry install
+    
+    - name: Run ruff linting
+      run: poetry run ruff check src
+    
+    - name: Run ruff formatting check
+      run: poetry run ruff format --check src
