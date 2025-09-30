@@ -6,9 +6,9 @@ from pydantic import BaseModel, Field
 from agent.prompts import PROFILE_INFORMATION_PROMPT, FOLLOW_UP_QUESTION_PROMPT
 from langchain_core.messages import AIMessage
 
-llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 
-# config = RunnableConfig(max_retries=3, retry_delay=2, stop=["\n\n"])
+def get_llm():
+    return ChatOpenAI(model="gpt-4o-mini", temperature=0)
 
 
 class ProfileStateModel(BaseModel):
@@ -127,6 +127,7 @@ def extract_profile_information(state: OverallState) -> ProfilingState:
     current_profile_info = get_current_profile_information(state)
 
     # 1. Get structured output for profile extraction
+    llm = get_llm()  # Get LLM when needed
     structured_llm = llm.with_structured_output(ProfileInformation)
     formatted_prompt = PROFILE_INFORMATION_PROMPT.format(
         fields=current_profile_info.get_field_descriptions(),
@@ -160,6 +161,7 @@ def extract_profile_information(state: OverallState) -> ProfilingState:
 
 
 def ask_profile_questions(state: ProfilingState) -> OverallState:
+    llm = get_llm()  # Get LLM when needed
     structured_llm = llm.with_structured_output(ProfileQuestions)
     current_profile_info = get_current_profile_information(state)
 
