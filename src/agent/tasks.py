@@ -3,14 +3,8 @@ from agent.state import (
     ProfilingState,
     JobRecommendationState,
 )
-from typing import List
-from agent.models import (
-    ProfileInformation,
-    ProfileQuestions,
-    JobRecommendations
-)
+from agent.models import ProfileInformation, ProfileQuestions, JobRecommendations
 from langchain_openai import ChatOpenAI
-from pydantic import BaseModel, Field
 from agent.prompts import (
     PROFILE_INFORMATION_PROMPT,
     FOLLOW_UP_QUESTION_PROMPT,
@@ -20,7 +14,7 @@ from langchain_core.messages import AIMessage
 
 
 def get_llm():
-    import config
+
     return ChatOpenAI(model="gpt-4o-mini", temperature=0)
 
 
@@ -107,8 +101,8 @@ def ask_profile_questions(state: ProfilingState) -> OverallState:
         "profile_questions": structured_response.questions,
     }
 
-def get_job_recommendations(state: ProfilingState) -> JobRecommendationState:
 
+def get_job_recommendations(state: ProfilingState) -> JobRecommendationState:
     llm = get_llm()
     structured_llm = llm.with_structured_output(JobRecommendations)
     current_profile_info = get_current_profile_information(state)

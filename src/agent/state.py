@@ -7,7 +7,7 @@ class OverallState(TypedDict):
     # Always present from the start
     messages: Annotated[list, add_messages]
     do_profiling: bool
-    
+
     # Fields that will be populated during profiling - make them optional
     interests: Annotated[list, operator.add] | None
     competencies: Annotated[list, operator.add] | None
@@ -16,7 +16,7 @@ class OverallState(TypedDict):
     profile_questions: Annotated[list, operator.add] | None
     age: int | None
     is_locally_focused: bool | None
-    
+
     # Fields that will be populated during job recommendation - make them optional
     job_role: list[str] | None
     job_role_description: list[str] | None
@@ -41,4 +41,3 @@ class JobRecommendationState(TypedDict):
     job_role_description: list[str] | None
     education: list[str] | None
     profile_match: list[str] | None
-

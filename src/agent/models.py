@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import List
 
+
 class StateModel(BaseModel):
     pass
 
@@ -76,6 +77,7 @@ class ProfileQuestions(StateModel):
     questions: List[str] | None = Field(
         default=None, description="Follow-up questions to clarify the user's profile"
     )
+
 
 class JobRecommendations(StateModel):
     job_role: List[str] | None = Field(

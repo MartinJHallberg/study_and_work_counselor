@@ -36,7 +36,9 @@ FOLLOW_UP_QUESTION_PROMPT = (
     """
 )
 
-JOB_RECOMMENDATIONS_PROMPT = BASE_ROLE + """
+JOB_RECOMMENDATIONS_PROMPT = (
+    BASE_ROLE
+    + """
     Instructions:
     - Based on the user's profile information, recommend suitable job roles that align with their characteristics and preferences.
     - Suggest at least 10 job roles that fit the user's profile.
@@ -49,3 +51,4 @@ JOB_RECOMMENDATIONS_PROMPT = BASE_ROLE + """
     Profile Information:
     {current_profile_information}
     """
+)

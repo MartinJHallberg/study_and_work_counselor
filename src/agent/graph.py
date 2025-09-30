@@ -1,5 +1,9 @@
 from langgraph.graph import START, END
-from agent.tasks import extract_profile_information, ask_profile_questions, get_job_recommendations
+from agent.tasks import (
+    extract_profile_information,
+    ask_profile_questions,
+    get_job_recommendations,
+)
 from langgraph.graph import StateGraph
 from agent.state import OverallState
 
