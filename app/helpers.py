@@ -25,6 +25,8 @@ def init_state():
         st.session_state.pending_questions = []
     if "processing" not in st.session_state:
         st.session_state.processing = False
+    if "app_started" not in st.session_state:
+        st.session_state.app_started = False
 
 
 def check_api_key():

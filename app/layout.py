@@ -1,7 +1,7 @@
 """Layout and main app structure for the Streamlit app."""
 import streamlit as st
 from helpers import load_environment, init_state, check_api_key, stream_user_input, stage_header
-from controls import left_sidebar_controls, right_sidebar_controls, chat_interface, job_recommendations_display
+from controls import left_sidebar_controls, right_sidebar_controls, chat_interface, job_recommendations_display, welcome_screen
 
 
 def setup_page():
@@ -28,35 +28,40 @@ def render_layout():
 
     # Main content area
     with main_col:
-        st.title("🎓 Study & Work Counselor")
-        stage_header()
-        
-        # Chat interface
-        chat_interface()
-        
-        # Show thinking indicator if processing
-        if st.session_state.get("processing", False):
-            with st.chat_message("assistant"):
-                st.markdown("🤔 **Thinking...**")
-        
-        # Chat input
-        if user_input := st.chat_input("Your message"):
-            # Immediately show user message and set processing state
-            st.session_state.chat_history.append({"role": "user", "content": user_input})
-            st.session_state.processing = True
-            st.rerun()
-        
-        # Process any pending input
-        if st.session_state.processing and st.session_state.chat_history:
-            last_message = st.session_state.chat_history[-1]
-            if last_message["role"] == "user":
-                # Process the most recent user message
-                stream_user_input(last_message["content"])
-                st.session_state.processing = False
+        if not st.session_state.app_started:
+            # Show welcome screen
+            welcome_screen()
+        else:
+            # Show normal app interface
+            st.title("🎓 Study & Work Counselor")
+            stage_header()
+            
+            # Chat interface
+            chat_interface()
+            
+            # Show thinking indicator if processing
+            if st.session_state.get("processing", False):
+                with st.chat_message("assistant"):
+                    st.markdown("🤔 **Thinking...**")
+            
+            # Chat input
+            if user_input := st.chat_input("Your message"):
+                # Immediately show user message and set processing state
+                st.session_state.chat_history.append({"role": "user", "content": user_input})
+                st.session_state.processing = True
                 st.rerun()
-        
-        # Job recommendations display
-        job_recommendations_display()
+            
+            # Process any pending input
+            if st.session_state.processing and st.session_state.chat_history:
+                last_message = st.session_state.chat_history[-1]
+                if last_message["role"] == "user":
+                    # Process the most recent user message
+                    stream_user_input(last_message["content"])
+                    st.session_state.processing = False
+                    st.rerun()
+            
+            # Job recommendations display
+            job_recommendations_display()
 
 
 def main():
