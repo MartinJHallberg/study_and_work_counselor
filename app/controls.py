@@ -191,36 +191,55 @@ def get_job_recommendation_sidebar():
                 else:
                     st.session_state.selected_jobs.append(job_title)
                 st.rerun()
-    
-def job_recommendations_display():
+
+def get_profile_display():
+
+    state = st.session_state.graph_state
+    # Determine stage based on 'do_profiling'
+    if state.get("do_profiling") is True:
+        st.markdown("### 🔍 Profiling Stage")
+        st.write("Your profile is being created and the more information you provide, the better job recommendations you will receive. Please answer the questions in the chat to help us understand your interests, skills, and preferences.")
+        st.write("If you think you've provided enough information, you can click the button below to proceed to job recommendations.")
+
+    if state.get("do_profiling") is False:
+
+        st.markdown("### Profile Complete!")
+
+        st.write("You have completed your profile. You can now proceed to get personalized job recommendations based on your interests, skills, and preferences.")
+
+    if st.button("Proceed to Job Recommendations", type="primary", use_container_width=True):
+        st.session_state.stage = Stage.JOB_RECOMMENDATION
+        st.rerun()
+
+def get_job_recommendations_display():
     """Display job recommendations in the main area."""
-    if st.session_state.stage == Stage.JOB_RECOMMENDATION:
-        # Initialize selected_jobs if not exists
-        if "selected_jobs" not in st.session_state:
-            st.session_state.selected_jobs = []
+    
+    # Initialize selected_jobs if not exists
+    if "selected_jobs" not in st.session_state:
+        st.session_state.selected_jobs = []
+    
+    # Get job data
+    job_roles = st.session_state.graph_state.get("job_role", [])
+    
+    if job_roles:
+        st.markdown("### Job Recommendations Ready!")
+        st.write("Your personalized job recommendations are available in the right panel.")
+        st.write("Use the **Explore All Jobs** button to see detailed information about each role, and select up to 3 jobs you're most interested in.")
+                    
+        st.divider()
         
-        # Get job data
-        job_roles = st.session_state.graph_state.get("job_role", [])
-        
-        if job_roles:
-            st.markdown("### Job Recommendations Ready!")
-            st.write("Your personalized job recommendations are available in the right panel.")
-            st.write("Use the **Explore All Jobs** button to see detailed information about each role, and select up to 3 jobs you're most interested in.")
-                      
-            st.divider()
-            
-            # Conditional display based on selection
-            if len(st.session_state.selected_jobs) < 1:
-                st.info("🔍 **Select minimum one job** to proceed to job research")
-            else:
-                if st.button("� Start Job Research", 
-                           use_container_width=True, 
-                           type="primary",
-                           help="Begin researching your selected jobs"):
-                    st.session_state.stage = "job_research"
-                    st.rerun()
+        # Conditional display based on selection
+        if len(st.session_state.selected_jobs) < 1:
+            st.info("🔍 **Select minimum one job** to proceed to job research")
         else:
-            st.info("Job recommendations are being generated. Please wait...")
+            if st.button("� Start Job Research", 
+                        use_container_width=True, 
+                        type="primary",
+                        help="Begin researching your selected jobs"):
+                st.session_state.stage = "job_research"
+                st.rerun()
+    else:
+        st.info("Job recommendations are being generated. Please wait...")
 
 
     

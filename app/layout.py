@@ -1,7 +1,8 @@
 """Layout and main app structure for the Streamlit app."""
 import streamlit as st
+from stages import Stage
 from helpers import load_environment, init_state, check_api_key, stream_user_input, stage_header
-from controls import left_sidebar_controls, right_sidebar_controls, chat_interface, job_recommendations_display, welcome_screen
+from controls import left_sidebar_controls, right_sidebar_controls, chat_interface, get_job_recommendations_display, welcome_screen, get_profile_display
 
 
 def setup_page():
@@ -76,8 +77,17 @@ def render_layout():
                     st.session_state.processing = False
                     st.rerun()
             
+            # Profile display
+            if st.session_state.stage == Stage.PROFILING:
+                get_profile_display()
+
+
             # Job recommendations display
-            job_recommendations_display()
+            elif st.session_state.stage == Stage.JOB_RECOMMENDATION:
+                get_job_recommendations_display()
+
+            else:
+                pass
 
 
 def main():

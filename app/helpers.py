@@ -111,10 +111,6 @@ def stream_user_input(user_input: str):
             if value.get("profile_questions"):
                 st.session_state.pending_questions = value["profile_questions"]
 
-            # Determine stage based on 'do_profiling'
-            if state.get("do_profiling") is False:
-                st.session_state.stage = Stage.JOB_RECOMMENDATION
-
     # Update chat history for display (convert to simple role/content)
     # Preserve any intro messages that aren't in the graph state
     intro_messages = []
