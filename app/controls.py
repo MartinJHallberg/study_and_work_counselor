@@ -1,11 +1,11 @@
 """Control components for the Streamlit app."""
+
 import streamlit as st
 from stages import Stage
 
 
 def get_active_button_style(text: str) -> str:
-        
-        html = f"""
+    html = f"""
         <div style="
             background: linear-gradient(90deg, #4ECDC4, #6BCCC4);
             color: white;
@@ -22,38 +22,42 @@ def get_active_button_style(text: str) -> str:
         </div>
         """
 
-        return st.markdown(html, unsafe_allow_html=True)
+    return st.markdown(html, unsafe_allow_html=True)
 
 
 def left_sidebar_controls():
     """Left sidebar with navigation and profile snapshot."""
     st.header("Navigation")
     current_stage = st.session_state.stage
-    
+
     # Profiling Stage - always first
     if current_stage == Stage.PROFILING:
         # Active state
         get_active_button_style("🔍 PROFILING STAGE")
     else:
         # Inactive state - clickable
-        if st.button("🔍 Profiling Stage", 
-                    key="nav_to_profiling", 
-                    use_container_width=True,
-                    help="Click to switch back to profiling"):
+        if st.button(
+            "🔍 Profiling Stage",
+            key="nav_to_profiling",
+            use_container_width=True,
+            help="Click to switch back to profiling",
+        ):
             st.session_state.stage = Stage.PROFILING
             st.session_state.graph_state["do_profiling"] = True
             st.rerun()
-    
+
     # Job Recommendations Stage - always second
     if current_stage == Stage.JOB_RECOMMENDATION:
         # Active state
         get_active_button_style("💼 JOB RECOMMENDATIONS STAGE")
     else:
         # Inactive state - clickable
-        if st.button("💼 Job Recommendations Stage", 
-                    key="nav_to_recommendations", 
-                    use_container_width=True,
-                    help="Click to switch to job recommendations"):
+        if st.button(
+            "💼 Job Recommendations Stage",
+            key="nav_to_recommendations",
+            use_container_width=True,
+            help="Click to switch to job recommendations",
+        ):
             st.session_state.stage = Stage.JOB_RECOMMENDATION
             st.session_state.graph_state["do_profiling"] = False
             st.rerun()
@@ -63,10 +67,12 @@ def left_sidebar_controls():
         get_active_button_style("📚 JOB RESEARCH STAGE")
     else:
         # Inactive state - clickable
-        if st.button("📚 Job Research Stage", 
-                    key="nav_to_research", 
-                    use_container_width=True,
-                    help="Click to switch to job research"):
+        if st.button(
+            "📚 Job Research Stage",
+            key="nav_to_research",
+            use_container_width=True,
+            help="Click to switch to job research",
+        ):
             st.session_state.stage = Stage.JOB_RESEARCH
             st.rerun()
 
@@ -74,7 +80,14 @@ def left_sidebar_controls():
 
     if st.button("🔄 Reset Conversation", use_container_width=True, type="secondary"):
         # Reset to welcome screen
-        for key in ["graph_state", "chat_history", "stage", "pending_questions", "app_started", "processing"]:
+        for key in [
+            "graph_state",
+            "chat_history",
+            "stage",
+            "pending_questions",
+            "app_started",
+            "processing",
+        ]:
             if key in st.session_state:
                 del st.session_state[key]
         st.experimental_rerun()
@@ -82,7 +95,7 @@ def left_sidebar_controls():
 
 def get_profile_sidebar():
     st.markdown("#### 📋 Profile Information")
-    
+
     # Show profile values per attribute
     profile_fields = [
         ("👤 Age", "age"),
@@ -92,10 +105,10 @@ def get_profile_sidebar():
         ("💼 Job Preferences", "job_characteristics"),
         ("📍 Location Focus", "is_locally_focused"),
     ]
-    
+
     for label, field in profile_fields:
         val = st.session_state.graph_state.get(field)
-        
+
         # Format the value for display
         if val is None:
             formatted_val = "*Not set*"
@@ -113,15 +126,23 @@ def get_profile_sidebar():
             st.markdown(f"**{label}:** *Not set*")
         else:
             st.markdown(f"**{label}:** {str(val)}")
-    
+
     # Profile completeness indicator
-    filled_fields = sum(1 for _, f in profile_fields if st.session_state.graph_state.get(f) not in [None, [], ""])
+    filled_fields = sum(
+        1
+        for _, f in profile_fields
+        if st.session_state.graph_state.get(f) not in [None, [], ""]
+    )
     progress = filled_fields / len(profile_fields)
-    
+
     st.divider()
-    st.metric("Profile Completeness", f"{progress:.1%}", f"{filled_fields}/{len(profile_fields)} fields")
+    st.metric(
+        "Profile Completeness",
+        f"{progress:.1%}",
+        f"{filled_fields}/{len(profile_fields)} fields",
+    )
     st.progress(progress)
-    
+
     # Show pending questions if any
     if st.session_state.pending_questions:
         st.divider()
@@ -134,24 +155,24 @@ def get_profile_sidebar():
 
 def get_job_recommendation_sidebar():
     st.markdown("#### 💼 Job Recommendations")
-    
+
     # Initialize session state for job selection
     if "selected_jobs" not in st.session_state:
         st.session_state.selected_jobs = []
-    
+
     # Get job data
     job_roles = st.session_state.graph_state.get("job_role", [])
     job_descriptions = st.session_state.graph_state.get("job_role_description", [])
     education_info = st.session_state.graph_state.get("education", [])
     profile_match = st.session_state.graph_state.get("profile_match", [])
-    
+
     # Show recommendation summary if available
     if job_roles:
-
-        
         # Explore all jobs button
         if st.button("🔍 Explore All Jobs", use_container_width=True):
-            show_job_explorer_modal(job_roles, job_descriptions, education_info, profile_match)
+            show_job_explorer_modal(
+                job_roles, job_descriptions, education_info, profile_match
+            )
 
         st.divider()
 
@@ -164,27 +185,27 @@ def get_job_recommendation_sidebar():
             st.success(f"{len(st.session_state.selected_jobs)}/3 jobs selected")
         elif job_roles:
             st.info("No jobs selected yet. Click on job titles above to select them.")
-        
+
         st.divider()
         st.markdown("**Select Jobs (Max 3):**")
-        
+
         # Job selection buttons
         for i, job_title in enumerate(job_roles):
             # Check if job is selected and if we can still select more
             is_selected = job_title in st.session_state.selected_jobs
             can_select = len(st.session_state.selected_jobs) < 3 or is_selected
-            
+
             # Button styling based on selection state
             button_type = "primary" if is_selected else "secondary"
             disabled = not can_select
-            
+
             if st.button(
                 f"{'✓ ' if is_selected else ''}{job_title}",
                 key=f"sidebar_job_select_{i}",
                 disabled=disabled,
                 type=button_type,
                 use_container_width=True,
-                help="Click to select/deselect this job"
+                help="Click to select/deselect this job",
             ):
                 if is_selected:
                     st.session_state.selected_jobs.remove(job_title)
@@ -192,57 +213,70 @@ def get_job_recommendation_sidebar():
                     st.session_state.selected_jobs.append(job_title)
                 st.rerun()
 
-def get_profile_display():
 
+def get_profile_display():
     state = st.session_state.graph_state
     # Determine stage based on 'do_profiling'
     if state.get("do_profiling") is True:
         st.markdown("### 🔍 Profiling Stage")
-        st.write("Your profile is being created and the more information you provide, the better job recommendations you will receive. Please answer the questions in the chat to help us understand your interests, skills, and preferences.")
-        st.write("If you think you've provided enough information, you can click the button below to proceed to job recommendations.")
+        st.write(
+            "Your profile is being created and the more information you provide, the better job recommendations you will receive. Please answer the questions in the chat to help us understand your interests, skills, and preferences."
+        )
+        st.write(
+            "If you think you've provided enough information, you can click the button below to proceed to job recommendations."
+        )
 
     if state.get("do_profiling") is False:
-
         st.markdown("### Profile Complete!")
 
-        st.write("You have completed your profile. You can now proceed to get personalized job recommendations based on your interests, skills, and preferences.")
+        st.write(
+            "You have completed your profile. You can now proceed to get personalized job recommendations based on your interests, skills, and preferences."
+        )
 
-    if st.button("Proceed to Job Recommendations", type="primary", use_container_width=True):
+    if st.button(
+        "Proceed to Job Recommendations", type="primary", use_container_width=True
+    ):
         st.session_state.stage = Stage.JOB_RECOMMENDATION
         st.rerun()
 
+
 def get_job_recommendations_display():
     """Display job recommendations in the main area."""
-    
+
     # Initialize selected_jobs if not exists
     if "selected_jobs" not in st.session_state:
         st.session_state.selected_jobs = []
-    
+
     # Get job data
     job_roles = st.session_state.graph_state.get("job_role", [])
-    
+
     if job_roles:
         st.markdown("### Job Recommendations Ready!")
-        st.write("Your personalized job recommendations are available in the right panel.")
-        st.write("Use the **Explore All Jobs** button to see detailed information about each role, and select up to 3 jobs you're most interested in.")
-                    
+        st.write(
+            "Your personalized job recommendations are available in the right panel."
+        )
+        st.write(
+            "Use the **Explore All Jobs** button to see detailed information about each role, and select up to 3 jobs you're most interested in."
+        )
+
         st.divider()
-        
+
         # Conditional display based on selection
         if len(st.session_state.selected_jobs) < 1:
             st.info("🔍 **Select minimum one job** to proceed to job research")
         else:
-            if st.button("� Start Job Research", 
-                        use_container_width=True, 
-                        type="primary",
-                        help="Begin researching your selected jobs"):
+            if st.button(
+                "� Start Job Research",
+                use_container_width=True,
+                type="primary",
+                help="Begin researching your selected jobs",
+            ):
                 st.session_state.stage = "job_research"
                 st.rerun()
     else:
         st.info("Job recommendations are being generated. Please wait...")
 
 
-    
 def right_sidebar_controls():
     """Right sidebar with step-specific information and details."""
     st.header("Step Details")
@@ -256,7 +290,8 @@ def right_sidebar_controls():
 
 def welcome_screen():
     """Display welcome screen with intro text and start button."""
-    st.markdown("""
+    st.markdown(
+        """
     <div style="text-align: center; padding: 2rem;">
         <h1>🎓 Welcome to Study & Work Counselor</h1>
         <p style="font-size: 1.2rem; margin: 2rem 0;">
@@ -264,9 +299,10 @@ def welcome_screen():
             professions based on your interests, skills, and preferences.
         </p>
     </div>
-    """, unsafe_allow_html=True)
-    
-    
+    """,
+        unsafe_allow_html=True,
+    )
+
     # Center the start button
     col_btn1, col_btn2, col_btn3 = st.columns([1, 1, 1])
     with col_btn2:
@@ -288,58 +324,65 @@ def chat_interface():
                 st.chat_message("assistant").write(message["content"])
 
 
-
 @st.dialog("Job Explorer")
 def show_job_explorer_modal(job_roles, job_descriptions, education_info, profile_match):
     """Show modal with detailed job cards in horizontal scroll."""
     st.markdown("### Explore All Recommended Jobs")
-    
+
     # Create tabs for each job for horizontal navigation
     if job_roles:
-        tabs = st.tabs([f"Job {i+1}: {role[:20]}..." if len(role) > 20 else f"Job {i+1}: {role}" 
-                       for i, role in enumerate(job_roles)])
-        
+        tabs = st.tabs(
+            [
+                f"Job {i + 1}: {role[:20]}..."
+                if len(role) > 20
+                else f"Job {i + 1}: {role}"
+                for i, role in enumerate(job_roles)
+            ]
+        )
+
         for i, tab in enumerate(tabs):
             with tab:
                 if i < len(job_roles):
                     # Job card content
                     st.markdown(f"## {job_roles[i]}")
-                    
+
                     col1, col2 = st.columns([2, 1])
-                    
+
                     with col1:
                         # Job description
                         if i < len(job_descriptions) and job_descriptions[i]:
                             st.markdown("### Description")
                             st.write(job_descriptions[i])
-                        
+
                         # Education requirements
                         if i < len(education_info) and education_info[i]:
                             st.markdown("### Education & Skills")
                             st.write(education_info[i])
-                    
+
                     with col2:
                         # Profile match
                         if i < len(profile_match) and profile_match[i]:
                             st.markdown("### Why This Matches You")
                             st.info(profile_match[i])
-                        
+
                         # Quick select button
                         job_title = job_roles[i]
                         is_selected = job_title in st.session_state.selected_jobs
-                        can_select = len(st.session_state.selected_jobs) < 3 or is_selected
-                        
+                        can_select = (
+                            len(st.session_state.selected_jobs) < 3 or is_selected
+                        )
+
                         if st.button(
-                            f"{'✓ Selected' if is_selected else 'Select Job'}", 
+                            f"{'✓ Selected' if is_selected else 'Select Job'}",
                             key=f"modal_select_{i}",
                             disabled=not can_select,
                             type="primary" if is_selected else "secondary",
-                            use_container_width=True
+                            use_container_width=True,
                         ):
                             if is_selected:
                                 st.session_state.selected_jobs.remove(job_title)
                             else:
                                 st.session_state.selected_jobs.append(job_title)
                             st.rerun()
-                    
+
                     st.divider()

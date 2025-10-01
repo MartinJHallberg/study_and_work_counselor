@@ -1,6 +1,6 @@
 """Helper functions for the Streamlit app."""
+
 import streamlit as st
-from typing import Dict, Any, List
 from langchain_core.messages import HumanMessage, AIMessage
 from agent.graph import graph
 import os
@@ -34,7 +34,11 @@ def init_state():
 
 def add_profiling_intro():
     """Add intro message for profiling stage if not already shown."""
-    if not st.session_state.intro_shown and st.session_state.stage == Stage.PROFILING and st.session_state.app_started:
+    if (
+        not st.session_state.intro_shown
+        and st.session_state.stage == Stage.PROFILING
+        and st.session_state.app_started
+    ):
         intro_message = {
             "role": "assistant",
             "content": """👋 **Welcome to the Profiling Stage!**
@@ -54,7 +58,7 @@ I'm here to help you discover career opportunities that match your interests, sk
 - **Share your career goals and preferences** (remote work, team size, industry, etc.)
 - **Don't worry about being perfect** - we can refine details as we go
 
-**Ready to start?** Just tell me about yourself, your interests, or ask me any questions about career planning!"""
+**Ready to start?** Just tell me about yourself, your interests, or ask me any questions about career planning!""",
         }
         st.session_state.chat_history.append(intro_message)
         st.session_state.intro_shown = True
@@ -115,9 +119,11 @@ def stream_user_input(user_input: str):
     # Preserve any intro messages that aren't in the graph state
     intro_messages = []
     for msg in st.session_state.chat_history:
-        if msg.get("role") == "assistant" and "Welcome to the Profiling Stage" in msg.get("content", ""):
+        if msg.get(
+            "role"
+        ) == "assistant" and "Welcome to the Profiling Stage" in msg.get("content", ""):
             intro_messages.append(msg)
-    
+
     # Rebuild chat history from graph state
     new_chat_history = intro_messages.copy()  # Start with preserved intro messages
     for msg in state.get("messages", []):
@@ -125,7 +131,7 @@ def stream_user_input(user_input: str):
             new_chat_history.append({"role": "user", "content": msg.content})
         elif isinstance(msg, AIMessage):
             new_chat_history.append({"role": "assistant", "content": msg.content})
-    
+
     # Update session state chat history
     st.session_state.chat_history = new_chat_history
     st.session_state.graph_state = state
