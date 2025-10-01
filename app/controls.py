@@ -118,33 +118,12 @@ def welcome_screen():
     <div style="text-align: center; padding: 2rem;">
         <h1>🎓 Welcome to Study & Work Counselor</h1>
         <p style="font-size: 1.2rem; margin: 2rem 0;">
-            An AI-powered assistant to help you discover your ideal career path
+            An AI-powered assistant to help helps you discover and research possible
+            professions based on your interests, skills, and preferences.
         </p>
     </div>
     """, unsafe_allow_html=True)
     
-    # Use full width of main column - no additional columns needed
-    st.markdown("""
-    <div style="text-align: center;">
-    
-    ### How it works:
-    
-    **🔍 Profiling Stage**
-    - We'll ask you questions about your interests, skills, and preferences
-    - Build a comprehensive profile of who you are
-    - Track your progress as we gather information
-    
-    **💼 Recommendation Stage**  
-    - Get personalized job recommendations based on your profile
-    - See detailed role descriptions and educational pathways
-    - Understand why each role matches your unique characteristics
-    
-    **🚀 Ready to get started?**
-    
-    Click the button below to begin your career discovery journey!
-    
-    </div>
-    """, unsafe_allow_html=True)
     
     # Center the start button
     col_btn1, col_btn2, col_btn3 = st.columns([1, 1, 1])
