@@ -75,7 +75,7 @@ def left_sidebar_controls():
 
 
 def get_profile_sidebar():
-    st.subheader("📋 Profile Information")
+    st.markdown("#### 📋 Profile Information")
     
     # Show profile values per attribute
     profile_fields = [
@@ -127,7 +127,7 @@ def get_profile_sidebar():
 
 
 def get_job_recommendation_sidebar():
-    st.subheader("💼 Job Recommendations")
+    st.markdown("#### 💼 Job Recommendations")
     
     # Initialize session state for job selection
     if "selected_jobs" not in st.session_state:
@@ -141,11 +141,23 @@ def get_job_recommendation_sidebar():
     
     # Show recommendation summary if available
     if job_roles:
-        st.metric("Available Roles", len(job_roles))
+
         
         # Explore all jobs button
         if st.button("🔍 Explore All Jobs", use_container_width=True):
             show_job_explorer_modal(job_roles, job_descriptions, education_info, profile_match)
+
+        st.divider()
+
+        # Show selected jobs summary
+        if st.session_state.get("selected_jobs"):
+            st.divider()
+            st.markdown("**Your Selected Jobs:**")
+            for job in st.session_state.selected_jobs:
+                st.write(f"✓ {job}")
+            st.success(f"{len(st.session_state.selected_jobs)}/3 jobs selected")
+        elif job_roles:
+            st.info("No jobs selected yet. Click on job titles above to select them.")
         
         st.divider()
         st.markdown("**Select Jobs (Max 3):**")
@@ -174,15 +186,7 @@ def get_job_recommendation_sidebar():
                     st.session_state.selected_jobs.append(job_title)
                 st.rerun()
     
-    # Show selected jobs summary
-    if st.session_state.get("selected_jobs"):
-        st.divider()
-        st.markdown("**Your Selected Jobs:**")
-        for job in st.session_state.selected_jobs:
-            st.write(f"✓ {job}")
-        st.success(f"{len(st.session_state.selected_jobs)}/3 jobs selected")
-    elif job_roles:
-        st.info("No jobs selected yet. Click on job titles above to select them.")
+
 
 
 def right_sidebar_controls():
@@ -229,32 +233,6 @@ def chat_interface():
             else:
                 st.chat_message("assistant").write(message["content"])
 
-
-def job_recommendations_display():
-    """Display job recommendations if available."""
-    if st.session_state.stage == "job_recommendation":
-        # Get job data
-        job_roles = st.session_state.graph_state.get("job_role", [])
-        
-        if job_roles:
-            st.markdown("### Job Recommendations Ready!")
-            st.write("Your personalized job recommendations are available in the right panel.")
-            st.write("Use the **Explore All Jobs** button to see detailed information about each role, and select up to 3 jobs you're most interested in.")
-            
-            # Show some basic stats in main area
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Total Recommendations", len(job_roles))
-            with col2:
-                selected_count = len(st.session_state.get("selected_jobs", []))
-                st.metric("Selected Jobs", f"{selected_count}/3")
-            with col3:
-                if st.session_state.get("selected_jobs"):
-                    st.metric("Status", "Ready ✓")
-                else:
-                    st.metric("Status", "Select Jobs")
-        else:
-            st.info("Job recommendations are being generated. Please wait...")
 
 
 @st.dialog("Job Explorer")
