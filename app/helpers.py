@@ -27,6 +27,36 @@ def init_state():
         st.session_state.processing = False
     if "app_started" not in st.session_state:
         st.session_state.app_started = False
+    if "intro_shown" not in st.session_state:
+        st.session_state.intro_shown = False
+
+
+def add_profiling_intro():
+    """Add intro message for profiling stage if not already shown."""
+    if not st.session_state.intro_shown and st.session_state.stage == "profiling" and st.session_state.app_started:
+        intro_message = {
+            "role": "assistant",
+            "content": """👋 **Welcome to the Profiling Stage!**
+
+I'm here to help you discover career opportunities that match your interests, skills, and goals. 
+
+**What we'll do together:**
+- Explore your interests, skills, and career preferences
+- Discuss your educational background and work experience
+- Identify your ideal work environment and goals
+- Build a comprehensive profile for personalized recommendations
+
+**💡 Tips for better results:**
+- **Be specific** about your interests and what excites you
+- **Include both technical and soft skills** you possess or want to develop
+- **Mention any work experience or education** you have
+- **Share your career goals and preferences** (remote work, team size, industry, etc.)
+- **Don't worry about being perfect** - we can refine details as we go
+
+**Ready to start?** Just tell me about yourself, your interests, or ask me any questions about career planning!"""
+        }
+        st.session_state.chat_history.append(intro_message)
+        st.session_state.intro_shown = True
 
 
 def check_api_key():
@@ -85,12 +115,14 @@ def stream_user_input(user_input: str):
                 st.session_state.stage = "job_recommendation"
 
     # Update chat history for display (convert to simple role/content)
-    # Don't clear existing chat_history since user message was already added
-    # Only rebuild if we don't have the current user message
-    current_chat_length = len(st.session_state.chat_history)
+    # Preserve any intro messages that aren't in the graph state
+    intro_messages = []
+    for msg in st.session_state.chat_history:
+        if msg.get("role") == "assistant" and "Welcome to the Profiling Stage" in msg.get("content", ""):
+            intro_messages.append(msg)
     
     # Rebuild chat history from graph state
-    new_chat_history = []
+    new_chat_history = intro_messages.copy()  # Start with preserved intro messages
     for msg in state.get("messages", []):
         if isinstance(msg, HumanMessage):
             new_chat_history.append({"role": "user", "content": msg.content})
@@ -104,9 +136,10 @@ def stream_user_input(user_input: str):
 
 def stage_header():
     """Display the current stage header."""
+    # Add intro message for profiling stage if needed
+    add_profiling_intro()
+    
     if st.session_state.stage == "profiling":
-        st.markdown("### Profiling Stage")
-        st.write("We're collecting and refining profile details. Answer follow-up questions or provide more info.")
+        st.markdown("### 🔍 Profiling Stage")
     else:
-        st.markdown("### Job Recommendation Stage")
-        st.write("Profile complete. Reviewing and generating job recommendations.")
+        st.markdown("### 💼 Job Recommendation Stage")

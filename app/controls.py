@@ -158,26 +158,6 @@ def right_sidebar_controls():
 
     elif st.session_state.stage == "job_recommendation":
         get_job_recommendation_sidebar()
-        
-    # Common help section
-    st.divider()
-    st.subheader("💡 Tips")
-    if st.session_state.stage == "profiling":
-        st.markdown("""
-        **For better results:**
-        - Be specific about your interests
-        - Include both technical and soft skills
-        - Mention any work experience or education
-        - Share your career goals and preferences
-        """)
-    else:
-        st.markdown("""
-        **Understanding recommendations:**
-        - Each role shows why it matches your profile
-        - Education suggestions are tailored to your background
-        - Consider roles that stretch your current skills
-        - Look for patterns across multiple recommendations
-        """)
 
 
 def welcome_screen():
@@ -204,10 +184,9 @@ def welcome_screen():
 
 def chat_interface():
     """Render the chat interface."""
-    chat_container = st.container()
-    
-    # Display existing chat
-    with chat_container:
+    # Create scrollable chat container with fixed height
+    with st.container(height=600):
+        # Display existing chat
         for message in st.session_state.chat_history:
             if message["role"] == "user":
                 st.chat_message("user").write(message["content"])

@@ -23,8 +23,8 @@ def render_layout():
         st.markdown("""
         <style>
         .stColumn > div {
-            padding-left: 0.5rem;
-            padding-right: 0.5rem;
+            padding-left: 1rem;
+            padding-right: 1rem;
         }
         .stColumn:first-child > div {
             padding-left: 0;
