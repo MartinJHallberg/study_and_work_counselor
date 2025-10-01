@@ -1,5 +1,28 @@
 """Control components for the Streamlit app."""
 import streamlit as st
+from stages import Stage
+
+
+def get_active_button_style(text: str) -> str:
+        
+        html = f"""
+        <div style="
+            background: linear-gradient(90deg, #4ECDC4, #6BCCC4);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 10px 0;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        ">
+            {text}<br>
+            <small style="font-size: 14px; opacity: 0.9;">Currently Active</small>
+        </div>
+        """
+
+        return st.markdown(html, unsafe_allow_html=True)
 
 
 def left_sidebar_controls():
@@ -8,64 +31,47 @@ def left_sidebar_controls():
     current_stage = st.session_state.stage
     
     # Profiling Stage - always first
-    if current_stage == "profiling":
+    if current_stage == Stage.PROFILING:
         # Active state
-        st.markdown("""
-        <div style="
-            background: linear-gradient(90deg, #4ECDC4, #6BCCC4);
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            font-size: 18px;
-            font-weight: bold;
-            margin: 10px 0;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        ">
-            🔍 PROFILING STAGE<br>
-            <small style="font-size: 14px; opacity: 0.9;">Currently Active</small>
-        </div>
-        """, unsafe_allow_html=True)
+        get_active_button_style("🔍 PROFILING STAGE")
     else:
         # Inactive state - clickable
-        if st.button("� Profiling Stage", 
+        if st.button("🔍 Profiling Stage", 
                     key="nav_to_profiling", 
                     use_container_width=True,
                     help="Click to switch back to profiling"):
-            st.session_state.stage = "profiling"
+            st.session_state.stage = Stage.PROFILING
             st.session_state.graph_state["do_profiling"] = True
             st.rerun()
     
     # Job Recommendations Stage - always second
-    if current_stage == "job_recommendation":
+    if current_stage == Stage.JOB_RECOMMENDATION:
         # Active state
-        st.markdown("""
-        <div style="
-            background: linear-gradient(90deg, #4ECDC4, #6BCCC4);
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            font-size: 18px;
-            font-weight: bold;
-            margin: 10px 0;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        ">
-            💼 JOB RECOMMENDATIONS<br>
-            <small style="font-size: 14px; opacity: 0.9;">Currently Active</small>
-        </div>
-        """, unsafe_allow_html=True)
+        get_active_button_style("💼 JOB RECOMMENDATIONS STAGE")
     else:
         # Inactive state - clickable
-        if st.button("� Job Recommendations Stage", 
+        if st.button("💼 Job Recommendations Stage", 
                     key="nav_to_recommendations", 
                     use_container_width=True,
                     help="Click to switch to job recommendations"):
-            st.session_state.stage = "job_recommendation"
+            st.session_state.stage = Stage.JOB_RECOMMENDATION
             st.session_state.graph_state["do_profiling"] = False
             st.rerun()
-    
+
+    if current_stage == Stage.JOB_RESEARCH:
+        # Active state
+        get_active_button_style("📚 JOB RESEARCH STAGE")
+    else:
+        # Inactive state - clickable
+        if st.button("📚 Job Research Stage", 
+                    key="nav_to_research", 
+                    use_container_width=True,
+                    help="Click to switch to job research"):
+            st.session_state.stage = Stage.JOB_RESEARCH
+            st.rerun()
+
     st.divider()
+
     if st.button("🔄 Reset Conversation", use_container_width=True, type="secondary"):
         # Reset to welcome screen
         for key in ["graph_state", "chat_history", "stage", "pending_questions", "app_started", "processing"]:
@@ -186,17 +192,46 @@ def get_job_recommendation_sidebar():
                     st.session_state.selected_jobs.append(job_title)
                 st.rerun()
     
+def job_recommendations_display():
+    """Display job recommendations in the main area."""
+    if st.session_state.stage == Stage.JOB_RECOMMENDATION:
+        # Initialize selected_jobs if not exists
+        if "selected_jobs" not in st.session_state:
+            st.session_state.selected_jobs = []
+        
+        # Get job data
+        job_roles = st.session_state.graph_state.get("job_role", [])
+        
+        if job_roles:
+            st.markdown("### Job Recommendations Ready!")
+            st.write("Your personalized job recommendations are available in the right panel.")
+            st.write("Use the **Explore All Jobs** button to see detailed information about each role, and select up to 3 jobs you're most interested in.")
+                      
+            st.divider()
+            
+            # Conditional display based on selection
+            if len(st.session_state.selected_jobs) < 1:
+                st.info("🔍 **Select minimum one job** to proceed to job research")
+            else:
+                if st.button("� Start Job Research", 
+                           use_container_width=True, 
+                           type="primary",
+                           help="Begin researching your selected jobs"):
+                    st.session_state.stage = "job_research"
+                    st.rerun()
+        else:
+            st.info("Job recommendations are being generated. Please wait...")
 
 
-
+    
 def right_sidebar_controls():
     """Right sidebar with step-specific information and details."""
     st.header("Step Details")
-    
-    if st.session_state.stage == "profiling":
+
+    if st.session_state.stage == Stage.PROFILING:
         get_profile_sidebar()
 
-    elif st.session_state.stage == "job_recommendation":
+    elif st.session_state.stage == Stage.JOB_RECOMMENDATION:
         get_job_recommendation_sidebar()
 
 
@@ -218,7 +253,7 @@ def welcome_screen():
     with col_btn2:
         if st.button("🚀 Start", type="primary", use_container_width=True):
             st.session_state.app_started = True
-            st.session_state.stage = "profiling"
+            st.session_state.stage = Stage.PROFILING
             st.rerun()
 
 

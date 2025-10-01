@@ -5,6 +5,7 @@ from langchain_core.messages import HumanMessage, AIMessage
 from agent.graph import graph
 import os
 from dotenv import load_dotenv
+from stages import Stage
 
 
 def load_environment():
@@ -20,7 +21,7 @@ def init_state():
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
     if "stage" not in st.session_state:
-        st.session_state.stage = "profiling"  # or 'recommendation'
+        st.session_state.stage = Stage.PROFILING
     if "pending_questions" not in st.session_state:
         st.session_state.pending_questions = []
     if "processing" not in st.session_state:
@@ -33,7 +34,7 @@ def init_state():
 
 def add_profiling_intro():
     """Add intro message for profiling stage if not already shown."""
-    if not st.session_state.intro_shown and st.session_state.stage == "profiling" and st.session_state.app_started:
+    if not st.session_state.intro_shown and st.session_state.stage == Stage.PROFILING and st.session_state.app_started:
         intro_message = {
             "role": "assistant",
             "content": """👋 **Welcome to the Profiling Stage!**
@@ -112,7 +113,7 @@ def stream_user_input(user_input: str):
 
             # Determine stage based on 'do_profiling'
             if state.get("do_profiling") is False:
-                st.session_state.stage = "job_recommendation"
+                st.session_state.stage = Stage.JOB_RECOMMENDATION
 
     # Update chat history for display (convert to simple role/content)
     # Preserve any intro messages that aren't in the graph state
@@ -138,8 +139,10 @@ def stage_header():
     """Display the current stage header."""
     # Add intro message for profiling stage if needed
     add_profiling_intro()
-    
-    if st.session_state.stage == "profiling":
+
+    if st.session_state.stage == Stage.PROFILING:
         st.markdown("### 🔍 Profiling Stage")
-    else:
+    elif st.session_state.stage == Stage.JOB_RECOMMENDATION:
         st.markdown("### 💼 Job Recommendation Stage")
+    elif st.session_state.stage == Stage.JOB_RESEARCH:
+        st.markdown("### 🔬 Job Research Stage")
