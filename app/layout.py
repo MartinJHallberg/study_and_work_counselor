@@ -15,23 +15,23 @@ def setup_page():
 
 def render_layout():
     """Render the main app layout with sidebars and content."""
-    # Create three columns for layout
-    left_col, main_col, right_col = st.columns([1, 2, 1])
+    if not st.session_state.app_started:
+        # Show only the welcome screen - no sidebars
+        welcome_screen()
+    else:
+        # Create three columns for layout with sidebars
+        left_col, main_col, right_col = st.columns([1, 3, 1])
 
-    # Left sidebar content
-    with left_col:
-        left_sidebar_controls()
+        # Left sidebar content
+        with left_col:
+            left_sidebar_controls()
 
-    # Right sidebar content  
-    with right_col:
-        right_sidebar_controls()
+        # Right sidebar content  
+        with right_col:
+            right_sidebar_controls()
 
-    # Main content area
-    with main_col:
-        if not st.session_state.app_started:
-            # Show welcome screen
-            welcome_screen()
-        else:
+        # Main content area
+        with main_col:
             # Show normal app interface
             st.title("🎓 Study & Work Counselor")
             stage_header()

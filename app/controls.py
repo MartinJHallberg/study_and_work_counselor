@@ -4,14 +4,10 @@ import streamlit as st
 
 def left_sidebar_controls():
     """Left sidebar with navigation and profile snapshot."""
-    # Grey out if app hasn't started
-    if not st.session_state.app_started:
-        st.markdown('<div style="opacity: 0.3;">', unsafe_allow_html=True)
-    
     st.header("Navigation")
     current_stage = st.session_state.stage
-    profiling_disabled = current_stage == "profiling" or not st.session_state.app_started
-    recommendation_disabled = current_stage == "job_recommendation" or not st.session_state.app_started
+    profiling_disabled = current_stage == "profiling"
+    recommendation_disabled = current_stage == "job_recommendation"
 
     # Buttons to force stage (manual override)
     if st.button("Go to Profiling", disabled=profiling_disabled):
@@ -23,15 +19,12 @@ def left_sidebar_controls():
 
     
     st.divider()
-    if st.button("Reset Conversation", disabled=not st.session_state.app_started):
+    if st.button("Reset Conversation"):
         # Reset to welcome screen
         for key in ["graph_state", "chat_history", "stage", "pending_questions", "app_started", "processing"]:
             if key in st.session_state:
                 del st.session_state[key]
         st.experimental_rerun()
-    
-    if not st.session_state.app_started:
-        st.markdown('</div>', unsafe_allow_html=True)
 
 
 def get_profile_sidebar():
@@ -90,10 +83,6 @@ def get_job_recommendation_sidebar():
 
 def right_sidebar_controls():
     """Right sidebar with step-specific information and details."""
-    # Grey out if app hasn't started
-    if not st.session_state.app_started:
-        st.markdown('<div style="opacity: 0.3;">', unsafe_allow_html=True)
-    
     st.header("Step Details")
     
     if st.session_state.stage == "profiling":
@@ -121,9 +110,6 @@ def right_sidebar_controls():
         - Consider roles that stretch your current skills
         - Look for patterns across multiple recommendations
         """)
-    
-    if not st.session_state.app_started:
-        st.markdown('</div>', unsafe_allow_html=True)
 
 
 def welcome_screen():
@@ -137,35 +123,36 @@ def welcome_screen():
     </div>
     """, unsafe_allow_html=True)
     
-    # Create centered columns for the intro content
-    col1, col2, col3 = st.columns([1, 2, 1])
+    # Use full width of main column - no additional columns needed
+    st.markdown("""
+    <div style="text-align: center;">
     
-    with col2:
-        st.markdown("""
-        ### How it works:
-        
-        **🔍 Profiling Stage**
-        - We'll ask you questions about your interests, skills, and preferences
-        - Build a comprehensive profile of who you are
-        - Track your progress as we gather information
-        
-        **💼 Recommendation Stage**  
-        - Get personalized job recommendations based on your profile
-        - See detailed role descriptions and educational pathways
-        - Understand why each role matches your unique characteristics
-        
-        **🚀 Ready to get started?**
-        
-        Click the button below to begin your career discovery journey!
-        """)
-        
-        # Center the start button
-        col_btn1, col_btn2, col_btn3 = st.columns([1, 1, 1])
-        with col_btn2:
-            if st.button("🚀 Start Your Journey", type="primary", use_container_width=True):
-                st.session_state.app_started = True
-                st.session_state.stage = "profiling"
-                st.rerun()
+    ### How it works:
+    
+    **🔍 Profiling Stage**
+    - We'll ask you questions about your interests, skills, and preferences
+    - Build a comprehensive profile of who you are
+    - Track your progress as we gather information
+    
+    **💼 Recommendation Stage**  
+    - Get personalized job recommendations based on your profile
+    - See detailed role descriptions and educational pathways
+    - Understand why each role matches your unique characteristics
+    
+    **🚀 Ready to get started?**
+    
+    Click the button below to begin your career discovery journey!
+    
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Center the start button
+    col_btn1, col_btn2, col_btn3 = st.columns([1, 1, 1])
+    with col_btn2:
+        if st.button("🚀 Start Your Journey", type="primary", use_container_width=True):
+            st.session_state.app_started = True
+            st.session_state.stage = "profiling"
+            st.rerun()
 
 
 def chat_interface():
