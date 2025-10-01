@@ -19,6 +19,22 @@ def render_layout():
         # Show only the welcome screen - no sidebars
         welcome_screen()
     else:
+        # Add CSS for column spacing
+        st.markdown("""
+        <style>
+        .stColumn > div {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+        .stColumn:first-child > div {
+            padding-left: 0;
+        }
+        .stColumn:last-child > div {
+            padding-right: 0;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
         # Create three columns for layout with sidebars
         left_col, main_col, right_col = st.columns([1, 3, 1])
 
