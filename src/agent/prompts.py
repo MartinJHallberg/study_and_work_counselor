@@ -52,3 +52,5 @@ JOB_RECOMMENDATIONS_PROMPT = (
     {current_profile_information}
     """
 )
+
+RESEARCH_QUERY_PROMPT = """{job_descriptions}"""

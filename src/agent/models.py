@@ -95,3 +95,8 @@ class JobRecommendations(StateModel):
     summary: str | None = Field(
         description="A summary of the job recommendations provided and the characteristics of the profile"
     )
+
+class ResearchQuery(StateModel):
+    research_query: List[str] | None = Field(
+        description="A list of research queries based on the job recommendations"
+    )

@@ -2,13 +2,20 @@ from agent.state import (
     OverallState,
     ProfilingState,
     JobRecommendationState,
+    ResearchState,
 )
-from agent.models import ProfileInformation, ProfileQuestions, JobRecommendations
+from agent.models import (
+    ProfileInformation,
+    ProfileQuestions,
+    JobRecommendations,
+    ResearchQuery
+)
 from langchain_openai import ChatOpenAI
 from agent.prompts import (
     PROFILE_INFORMATION_PROMPT,
     FOLLOW_UP_QUESTION_PROMPT,
     JOB_RECOMMENDATIONS_PROMPT,
+    REARCH_QUERY_PROMPT
 )
 from langchain_core.messages import AIMessage
 
@@ -117,4 +124,20 @@ def get_job_recommendations(state: ProfilingState) -> JobRecommendationState:
         "job_role_description": structured_response.job_role_description,
         "education": structured_response.education,
         "profile_match": structured_response.profile_match,
+    }
+
+def get_research_query(state: OverallState) -> ResearchState:
+    llm = get_llm()
+    structured_llm = llm.with_structured_output(ResearchQuery)
+
+    jobs_with_descriptions = [job + ": " + desc for job, desc in zip(state.get("job_role", []), state.get("job_role_description", []))]
+
+    formatted_prompt = RESEARCH_QUERY_PROMPT.format(
+        current_profile_information="\n".join(jobs_with_descriptions),
+    )
+    structured_response = structured_llm.invoke(formatted_prompt)
+
+    return {
+        "messages": [AIMessage(content=structured_response.summary)],
+        "research_query": structured_response.job_role,
     }

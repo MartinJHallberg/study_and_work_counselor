@@ -41,3 +41,7 @@ class JobRecommendationState(TypedDict):
     job_role_description: list[str] | None
     education: list[str] | None
     profile_match: list[str] | None
+
+class ResearchState(TypedDict):
+    messages: Annotated[list, add_messages]
+    research_query: list[str] | None
