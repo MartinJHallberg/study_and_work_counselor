@@ -53,4 +53,19 @@ JOB_RECOMMENDATIONS_PROMPT = (
     """
 )
 
-RESEARCH_QUERY_PROMPT = """{job_descriptions}"""
+RESEARCH_QUERY_PROMPT = """
+    You are an expert in planning and conducting research about a specific job role.
+    You have a deep understanding of how to best make a comprehensive research plan.
+    You are tasked with creating a list of research queries based on the job roles and their descriptions
+    so that a user can get familiar with what a job entails, what skills are needed, what education that is
+    most common amongst practitioners and what the job market looks like.
+
+    Instructions:
+    - Use the job roles and their descriptions to generate relevant research queries.
+    - Ensure that the research queries are specific and targeted to gather useful information about each job role.
+    - Provide at least 5 research queries for each job role.
+    - Format the research queries as a list of strings.
+    
+    Job role:    {job_role}
+    Description: {job_role_description}
+    """

@@ -78,25 +78,38 @@ class ProfileQuestions(StateModel):
         default=None, description="Follow-up questions to clarify the user's profile"
     )
 
-
-class JobRecommendations(StateModel):
+class JobRecommendation(StateModel):
     job_role: List[str] | None = Field(
-        description="A list of recommended job roles that match the user's profile"
+        description="A recommended job role that matches the user's profile"
     )
     job_role_description: List[str] | None = Field(
-        description="A brief description of each recommended job role"
+        description="A brief description of the recommended job role"
     )
     education: List[str] | None = Field(
-        description="A list of educational paths or qualifications beneficial for each recommended job role"
+        description="A list of educational paths or qualifications beneficial for the recommended job role"
     )
     profile_match: List[str] = Field(
-        description="An explanation of why each job role is a good match for the user's profile"
+        description="An explanation of why the recommended job role is a good match for the user's profile"
+    )
+
+class JobRecommendations(StateModel):
+    job_recommendations: List[JobRecommendation] = Field(
+        description="A list of job recommendations based on the user's profile"
     )
     summary: str | None = Field(
-        description="A summary of the job recommendations provided and the characteristics of the profile"
+        description="A summary of the personal profile and how it relates to the recommended job roles"
     )
 
 class ResearchQuery(StateModel):
     research_query: List[str] | None = Field(
         description="A list of research queries based on the job recommendations"
+    )
+
+class JobResarch(StateModel):
+    job_recommendation: JobRecommendation = Field(
+        description="A job recommendation with associated research data"
+    )
+
+    research_query: ResearchQuery | None = Field(
+        description="A research query based on the job recommendation"
     )

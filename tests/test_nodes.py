@@ -2,6 +2,7 @@ from agent.tasks import (
     get_job_recommendations,
     extract_profile_information,
     ask_profile_questions,
+    get_research_query
 )
 from agent.state import OverallState, ProfilingState
 import pytest
@@ -58,3 +59,19 @@ def test_get_job_recommendations_with_complete_profile():
             assert value, f"Value for key '{key}' should not be an empty list"
         else:
             assert value is not None, f"Value for key '{key}' should not be None"
+
+@pytest.mark.llm_call
+def test_research_query():
+    state = OverallState(
+        job_role=["Software Developer"],
+        job_role_description=[
+            "A Software Developer writes and maintains code for software applications.",
+        ],
+    )
+
+    result = get_research_query(state)
+
+    assert result["research_query"] is not None
+    assert isinstance(result["research_query"], list)
+
+

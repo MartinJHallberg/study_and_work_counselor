@@ -15,7 +15,7 @@ from agent.prompts import (
     PROFILE_INFORMATION_PROMPT,
     FOLLOW_UP_QUESTION_PROMPT,
     JOB_RECOMMENDATIONS_PROMPT,
-    REARCH_QUERY_PROMPT
+    RESEARCH_QUERY_PROMPT,
 )
 from langchain_core.messages import AIMessage
 
@@ -130,14 +130,13 @@ def get_research_query(state: OverallState) -> ResearchState:
     llm = get_llm()
     structured_llm = llm.with_structured_output(ResearchQuery)
 
-    jobs_with_descriptions = [job + ": " + desc for job, desc in zip(state.get("job_role", []), state.get("job_role_description", []))]
-
     formatted_prompt = RESEARCH_QUERY_PROMPT.format(
-        current_profile_information="\n".join(jobs_with_descriptions),
+        job_role=state.get("job_role", []),
+        job_role_description=state.get("job_role_description", [])
     )
     structured_response = structured_llm.invoke(formatted_prompt)
 
     return {
-        "messages": [AIMessage(content=structured_response.summary)],
-        "research_query": structured_response.job_role,
+        "messages": [AIMessage(content="I've created a research plan. Let me start investigating...")],
+        "research_query": structured_response.research_query,
     }
