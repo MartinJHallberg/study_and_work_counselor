@@ -18,23 +18,11 @@ from agent.prompts import (
     RESEARCH_QUERY_PROMPT,
 )
 from langchain_core.messages import AIMessage
+from config import NUMBER_OF_JOB_RECOMMENDATIONS
 
 
 def get_llm():
     return ChatOpenAI(model="gpt-4o-mini", temperature=0)
-
-
-def get_current_profile_information(state: OverallState) -> ProfileInformation:
-    return ProfileInformation(
-        age=state.get("age"),  # Default to 0 if not present
-        interests=state.get("interests", []),
-        competencies=state.get("competencies", []),
-        personal_characteristics=state.get("personal_characteristics", []),
-        is_locally_focused=state.get("is_locally_focused"),
-        job_characteristics=state.get("job_characteristics", []),
-        is_profile_complete=state.get("is_profile_complete"),
-    )
-
 
 def get_conversation_history(state: OverallState) -> str:
     messages = state["messages"]
@@ -57,13 +45,13 @@ def get_conversation_history(state: OverallState) -> str:
 def extract_profile_information(state: OverallState) -> ProfilingState:
     # Extract and format user messages
     user_input_text = get_conversation_history(state)
-    current_profile_info = get_current_profile_information(state)
+    current_profile_info = state.get("profile_data", None)
 
     llm = get_llm()  # Get LLM when needed
     structured_llm = llm.with_structured_output(ProfileInformation)
     formatted_prompt = PROFILE_INFORMATION_PROMPT.format(
         user_input=user_input_text,
-        current_profile_information=current_profile_info.get_attribute_with_values(),
+        current_profile_information=current_profile_info,
     )
     structured_response = structured_llm.invoke(formatted_prompt)
 
@@ -77,27 +65,21 @@ def extract_profile_information(state: OverallState) -> ProfilingState:
         message = "Profile information extracted successfully."
 
     # Update the structured response with completeness check
-    structured_response.is_profile_complete = not has_null_values
+    profile_dict["is_profile_complete"] = not has_null_values
 
     return {
         "messages": [AIMessage(content=message)],
-        "age": structured_response.age,
-        "interests": structured_response.interests,
-        "competencies": structured_response.competencies,
-        "personal_characteristics": structured_response.personal_characteristics,
-        "job_characteristics": structured_response.desired_job_characteristics,
-        "is_locally_focused": structured_response.is_locally_focused,
-        "do_profiling": not structured_response.is_profile_complete,
+        "profile_data": profile_dict,
     }
 
 
 def ask_profile_questions(state: ProfilingState) -> OverallState:
     llm = get_llm()  # Get LLM when needed
     structured_llm = llm.with_structured_output(ProfileQuestions)
-    current_profile_info = get_current_profile_information(state)
+    current_profile_info = state.get("profile_data", None)
 
     formatted_prompt = FOLLOW_UP_QUESTION_PROMPT.format(
-        current_profile_information=current_profile_info.get_attribute_with_values(),
+        current_profile_information=current_profile_info,
     )
 
     structured_response = structured_llm.invoke(formatted_prompt)
@@ -108,22 +90,20 @@ def ask_profile_questions(state: ProfilingState) -> OverallState:
     }
 
 
-def get_job_recommendations(state: ProfilingState) -> JobRecommendationState:
+def get_job_recommendations(state: OverallState, number_of_recommendations: int=NUMBER_OF_JOB_RECOMMENDATIONS) -> JobRecommendationState:
     llm = get_llm()
     structured_llm = llm.with_structured_output(JobRecommendations)
-    current_profile_info = get_current_profile_information(state)
+    current_profile_info = state.get("profile_data", None)
 
     formatted_prompt = JOB_RECOMMENDATIONS_PROMPT.format(
-        current_profile_information=current_profile_info.get_attribute_with_values(),
+        number_of_recommendations=number_of_recommendations,
+        current_profile_information=current_profile_info,
     )
     structured_response = structured_llm.invoke(formatted_prompt)
 
     return {
         "messages": [AIMessage(content=structured_response.summary)],
-        "job_role": structured_response.job_role,
-        "job_role_description": structured_response.job_role_description,
-        "education": structured_response.education,
-        "profile_match": structured_response.profile_match,
+        "job_recommendations_data": structured_response.model_dump(),
     }
 
 def get_research_query(state: OverallState) -> ResearchState:
