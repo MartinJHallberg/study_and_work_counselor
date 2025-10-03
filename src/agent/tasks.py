@@ -48,7 +48,7 @@ def get_conversation_history(state: OverallState) -> str:
 def extract_profile_information(state: OverallState) -> ProfilingState:
     # Extract and format user messages
     user_input_text = get_conversation_history(state)
-    current_profile_info = state.get("profile_data", None)
+    current_profile_info = state.get("profile_information", None)
 
     llm = get_llm()  # Get LLM when needed
     structured_llm = llm.with_structured_output(ProfileInformation)
@@ -72,14 +72,14 @@ def extract_profile_information(state: OverallState) -> ProfilingState:
 
     return {
         "messages": [AIMessage(content=message)],
-        "profile_data": profile_dict,
+        "profile_information": profile_dict,
     }
 
 
 def ask_profile_questions(state: ProfilingState) -> OverallState:
     llm = get_llm()  # Get LLM when needed
     structured_llm = llm.with_structured_output(ProfileQuestions)
-    current_profile_info = state.get("profile_data", None)
+    current_profile_info = state.get("profile_information", None)
 
     formatted_prompt = FOLLOW_UP_QUESTION_PROMPT.format(
         current_profile_information=current_profile_info,
@@ -96,7 +96,7 @@ def ask_profile_questions(state: ProfilingState) -> OverallState:
 def get_job_recommendations(state: OverallState, number_of_recommendations: int=NUMBER_OF_JOB_RECOMMENDATIONS) -> JobRecommendationState:
     llm = get_llm()
     structured_llm = llm.with_structured_output(JobRecommendations)
-    current_profile_info = state.get("profile_data", None)
+    current_profile_info = state.get("profile_information", None)
 
     formatted_prompt = JOB_RECOMMENDATIONS_PROMPT.format(
         number_of_recommendations=number_of_recommendations,
@@ -104,9 +104,11 @@ def get_job_recommendations(state: OverallState, number_of_recommendations: int=
     )
     structured_response = structured_llm.invoke(formatted_prompt)
 
+    job_recommendations_list = [JobRecommendationData(**job) for job in structured_response.model_dump().get("job_recommendations", [])]
+
     return {
         "messages": [AIMessage(content=structured_response.summary)],
-        "job_recommendations_data": structured_response.model_dump(),
+        "job_recommendations_data": job_recommendations_list,
     }
 
 def get_research_query(state: OverallState) -> ResearchState:

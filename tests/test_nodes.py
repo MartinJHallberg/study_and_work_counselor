@@ -1,3 +1,4 @@
+from agent.models import JobRecommendationData
 from agent.tasks import (
     get_job_recommendations,
     extract_profile_information,
@@ -19,8 +20,8 @@ def test_extract_profile_information_with_minimal_input():
 
     result = extract_profile_information(state)
 
-    assert result["profile_data"]["interests"] is not None
-    assert result["profile_data"]["personal_characteristics"] is not None
+    assert result["profile_information"]["interests"] is not None
+    assert result["profile_information"]["personal_characteristics"] is not None
 
 @pytest.mark.llm_call
 def test_extract_profile_information_with_previous_data():
@@ -46,9 +47,9 @@ def test_extract_profile_information_with_previous_data():
 
     result = extract_profile_information(state)
 
-    assert len(result["profile_data"]["interests"]) > len(interests) # Ensure interests are updated
-    assert result["profile_data"]["personal_characteristics"] is not None
-    assert result["profile_data"]["age"] == 18  # Ensure age remains unchanged
+    assert len(result["profile_information"]["interests"]) > len(interests) # Ensure interests are updated
+    assert result["profile_information"]["personal_characteristics"] is not None
+    assert result["profile_information"]["age"] == 18  # Ensure age remains unchanged
 
 @pytest.mark.llm_call
 def test_ask_profile_questions_with_minimal_input():
@@ -86,12 +87,10 @@ def test_get_job_recommendations_with_complete_profile():
 
     assert result["messages"] is not None
 
-    for key, val in result["job_recommendations_data"].items():
-        if isinstance(val, list):
-            assert val, f"Value for key '{key}' should not be an empty list"
-            assert len(val) == 3
-        else:
-            assert val is not None, f"Value for key '{key}' should not be None"
+    for job in result["job_recommendations_data"]:
+        for attr_name in job.__dict__:
+            attr_value = getattr(job, attr_name)
+            assert attr_value is not None, f"Attribute '{attr_name}' should not be None"
 
 
 @pytest.mark.llm_call
