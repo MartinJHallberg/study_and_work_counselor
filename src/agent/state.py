@@ -5,9 +5,11 @@ import operator
 
 class OverallState(TypedDict):
     messages: Annotated[list, add_messages]
-    profile_data: dict | None  # Store as dict for serialization
-    job_recommendations_data: dict | None  # Store as dict for serialization
-    research_query_data: dict | None  # Store as dict for serialization
+    profile_data: dict | None 
+    job_recommendations: dict | None
+    selected_jobs: list[str] | None
+    job_research_data: dict | None
+
 
 
 class ProfilingState(TypedDict):

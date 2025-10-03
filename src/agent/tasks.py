@@ -7,8 +7,11 @@ from agent.state import (
 from agent.models import (
     ProfileInformation,
     ProfileQuestions,
+    JobRecommendationData,
     JobRecommendations,
-    ResearchQuery
+    ResearchQuery,
+    JobResearchData,
+    JobResearchStatus,
 )
 from langchain_openai import ChatOpenAI
 from agent.prompts import (
@@ -111,12 +114,39 @@ def get_research_query(state: OverallState) -> ResearchState:
     structured_llm = llm.with_structured_output(ResearchQuery)
 
     formatted_prompt = RESEARCH_QUERY_PROMPT.format(
-        job_role=state.get("job_role", []),
-        job_role_description=state.get("job_role_description", [])
+        job_role=state.get("job_recommendations_data").get("job_role"),
+        job_role_description=state.get("job_recommendations_data").get("job_role_description")
     )
     structured_response = structured_llm.invoke(formatted_prompt)
 
     return {
         "messages": [AIMessage(content="I've created a research plan. Let me start investigating...")],
         "research_query": structured_response.research_query,
+    }
+
+
+def start_job_research(state: OverallState) -> OverallState:
+    """Initialize job research for selected jobs."""
+    selected_jobs = state.get("selected_jobs", [])
+    
+    if not selected_jobs:
+        return {
+            "messages": [AIMessage(content="No jobs selected for research. Please select jobs first.")],
+        }
+    
+    # Initialize research results dictionary
+    jobs_in_research = state.get("job_research_data", {}).get("job_recommendation_data", {})
+
+    candidate_job = [job for job in selected_jobs if not jobs_in_research]
+
+    job = candidate_job[0]
+
+    job_research_data = JobResearchData(
+        job_recommendation=JobRecommendationData(**state.get("job_recommendations_data")),
+        job_research_status=JobResearchStatus.INITIALIZED
+    )
+    
+    return {
+        "messages": [AIMessage(content=f"Starting research on {len(selected_jobs)} selected jobs. Beginning with: {job}")],
+        "job_research_data": job_research_data.model_dump(),
     }

@@ -2,7 +2,8 @@ from agent.tasks import (
     get_job_recommendations,
     extract_profile_information,
     ask_profile_questions,
-    get_research_query
+    get_research_query,
+    start_job_research
 )
 from agent.state import OverallState, ProfilingState
 import pytest
@@ -95,11 +96,16 @@ def test_get_job_recommendations_with_complete_profile():
 
 @pytest.mark.llm_call
 def test_research_query():
-    state = OverallState(
-        job_role=["Software Developer"],
-        job_role_description=[
+
+    job = {
+        "job_role": ["Software Developer"],
+        "job_role_description": [
             "A Software Developer writes and maintains code for software applications.",
         ],
+    }
+
+    state = OverallState(
+        job_recommendations_data=job
     )
 
     result = get_research_query(state)
@@ -108,3 +114,24 @@ def test_research_query():
     assert isinstance(result["research_query"], list)
 
 
+def test_start_job_research():
+
+    jobs = {
+        "job_role": ["Software Developer", "Data Scientist", "Product Manager"],
+        "job_role_description": [
+            "A Software Developer writes and maintains code for software applications.",
+            "A Data Scientist analyzes and interprets complex data to help companies make decisions.",
+            "A Product Manager oversees the development and delivery of products, ensuring they meet customer needs and business goals.",
+        ],
+
+    }
+    selected_jobs = ["Software Developer", "Data Scientist"]
+
+    state = OverallState(
+        job_recommendations_data=jobs,
+        selected_jobs=selected_jobs,
+    )
+
+    result = start_job_research(state)
+
+    assert result["job_research_data"] is not None

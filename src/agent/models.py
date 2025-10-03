@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import List
+from enum import StrEnum
 
 
 class StateModel(BaseModel):
@@ -78,7 +79,7 @@ class ProfileQuestions(StateModel):
         default=None, description="Follow-up questions to clarify the user's profile"
     )
 
-class JobRecommendation(StateModel):
+class JobRecommendationData(StateModel):
     job_role: List[str] | None = Field(
         description="A recommended job role that matches the user's profile"
     )
@@ -86,14 +87,16 @@ class JobRecommendation(StateModel):
         description="A brief description of the recommended job role"
     )
     education: List[str] | None = Field(
+        default=None,
         description="A list of educational paths or qualifications beneficial for the recommended job role"
     )
     profile_match: List[str] = Field(
-        description="An explanation of why the recommended job role is a good match for the user's profile"
+        default=None,
+        description="A list of profile attributes that make the user a good match for the recommended job role"
     )
 
 class JobRecommendations(StateModel):
-    job_recommendations: List[JobRecommendation] = Field(
+    job_recommendations: List[JobRecommendationData] = Field(
         description="A list of job recommendations based on the user's profile"
     )
     summary: str | None = Field(
@@ -105,11 +108,26 @@ class ResearchQuery(StateModel):
         description="A list of research queries based on the job recommendations"
     )
 
-class JobResarch(StateModel):
-    job_recommendation: JobRecommendation = Field(
+
+class JobResearchStatus(StrEnum):
+    NOT_STARTED = "Not started"
+    INITIALIZED = "Initialized"
+    RESEARCH_QUERY_GENERATED = "Research query generated"
+    RESEARCH_IN_PROGRESS = "Research in progress"
+    EVALUATION_IN_PROGRESS = "Evaluation in progress"
+    COMPLETED = "completed"
+
+class JobResearchData(StateModel):
+    job_recommendation: JobRecommendationData = Field(
         description="A job recommendation with associated research data"
     )
 
     research_query: ResearchQuery | None = Field(
+        default=None,
         description="A research query based on the job recommendation"
+    )
+
+    research_status: JobResearchStatus = Field(
+        default=JobResearchStatus.NOT_STARTED,
+        description="The status of the research"
     )
