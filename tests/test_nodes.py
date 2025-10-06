@@ -1,4 +1,4 @@
-from agent.models import Job, JobRecommendationData
+from agent.models import Job, JobResearchStatus
 from agent.tasks import (
     get_job_recommendations,
     extract_profile_information,
@@ -6,6 +6,7 @@ from agent.tasks import (
     get_research_query,
     start_job_research
 )
+from langgraph.graph import StateGraph
 from agent.state import OverallState, ProfilingState
 import pytest
 
@@ -111,34 +112,61 @@ def test_research_query():
     assert result["research_query"] is not None
     assert isinstance(result["research_query"], list)
 
-@pytest.mark.llm_call
-def test_start_job_research():
 
-    job = [
-        {"job_role": "software developer",
-            "job_role_description": "A Software Developer writes and maintains code for software applications.",
-        },
-        {"job_role": "data scientist",
-            "job_role_description": "A Data Scientist analyzes and interprets complex data to help companies make decisions.",
-        },
-        {"job_role": "product manager",
-            "job_role_description": "A Product Manager oversees the development and delivery of products, ensuring they meet customer needs and business goals.",
-        }
+@pytest.fixture
+def software_developer():
+    return Job(
+        name="software developer",
+        description="A Software Developer writes and maintains code for software applications.",
+    )
+
+@pytest.fixture
+def data_scientist():
+    return Job(
+        name="data scientist",
+        description="A Data Scientist analyzes and interprets complex data to help companies make decisions.",
+    )
+
+@pytest.fixture
+def product_manager():
+    return Job(
+        name="product manager",
+        description="A Product Manager oversees the development and delivery of products, ensuring they meet customer needs and business goals.",
+    )
+
+
+
+@pytest.mark.llm_call
+def test_start_job_research(
+    software_developer,
+    data_scientist,
+    product_manager,
+):
+
+    jobs = [
+        software_developer,
+        data_scientist,
+        product_manager,
     ]
+
+    jobs = [job.model_dump() for job in jobs]
 
     selected_jobs = ["software developer", "data scientist"]
 
     state = OverallState(
-        job_recommendations_data=job,
+        job_recommendations_data=jobs,
         selected_jobs=selected_jobs
     )
 
     result = start_job_research(state)
 
     # Update state with research results
-    assert result["job_research_data"]["job_recommendation"]["job_role"] == "software developer"
-    assert result["job_research_data"]["job_recommendation"]["research_status"] == "INITIALIZED"
+    assert result["job_research_data"][0]["job"]["name"] == "software developer"
+    assert result["job_research_data"][0]["research_status"] == JobResearchStatus.INITIALIZED
 
     state.update(result)
-    assert state["job_research_data"]["job_recommendation"]["job_role"] == "software developer"
-    assert state["job_research_data"]["job_recommendation"]["research_status"] == "INITIALIZED"
+    assert isinstance(state["job_research_data"], list)
+    assert len(state["job_research_data"]) == 1 # check that one job is in research
+    assert state["job_research_data"][0]["job"]["name"] == "software developer"
+    assert state["job_research_data"][0]["research_status"] == JobResearchStatus.INITIALIZED
+

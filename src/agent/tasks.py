@@ -48,7 +48,7 @@ def get_conversation_history(state: OverallState) -> str:
 def extract_profile_information(state: OverallState) -> ProfilingState:
     # Extract and format user messages
     user_input_text = get_conversation_history(state)
-    current_profile_info = state.get("profile_information", None)
+    current_profile_info = state["profile_data"]
 
     llm = get_llm()  # Get LLM when needed
     structured_llm = llm.with_structured_output(ProfileInformation)
@@ -137,20 +137,20 @@ def start_job_research(state: OverallState) -> OverallState:
         }
     
     # Initialize research results dictionary
-    jobs_in_research = state.get("job_research_data", {}).get("job_recommendation_data", {})
+    jobs_in_research = [job_res["job"]["name"] for job_res in state["job_research_data"]] if state.get("job_research_data") else []
 
-    candidate_job = [job for job in selected_jobs if not jobs_in_research]
+    candidate_job = [job for job in selected_jobs if job not in jobs_in_research]
 
     job = candidate_job[0]
 
-    job_data = [job_ for job_ in state.get("job_recommendations_data") if job_["job_role"] == job][0]
+    job_data = [job_ for job_ in state.get("job_recommendations_data") if job_["name"] == job][0]
 
     job_research_data = JobResearchData(
-        job_recommendation=job_data,
+        job=job_data,
         research_status=JobResearchStatus.INITIALIZED
     )
     
     return {
         "messages": [AIMessage(content=f"Starting research on {len(selected_jobs)} selected jobs. Beginning with: {job}")],
-        "job_research_data": job_research_data.model_dump(),
+        "job_research_data": [job_research_data.model_dump()],
     }
