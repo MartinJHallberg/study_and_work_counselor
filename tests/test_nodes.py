@@ -1,4 +1,4 @@
-from agent.models import JobRecommendationData
+from agent.models import Job, JobRecommendationData
 from agent.tasks import (
     get_job_recommendations,
     extract_profile_information,
@@ -10,6 +10,7 @@ from agent.state import OverallState, ProfilingState
 import pytest
 
 MINIMAL_PROFILE_MESSAGE = "I like math, I am social and interested in arts."
+
 
 
 @pytest.mark.llm_call
@@ -96,15 +97,13 @@ def test_get_job_recommendations_with_complete_profile():
 @pytest.mark.llm_call
 def test_research_query():
 
-    job = {
-        "job_role": ["Software Developer"],
-        "job_role_description": [
-            "A Software Developer writes and maintains code for software applications.",
-        ],
-    }
+    job = Job(
+        name="Software Developer",
+        description="A Software Developer writes and maintains code for software applications.",
+    )
 
     state = OverallState(
-        job_recommendations_data=job
+        job_recommendations_data=job.model_dump()
     )
 
     result = get_research_query(state)
@@ -112,25 +111,34 @@ def test_research_query():
     assert result["research_query"] is not None
     assert isinstance(result["research_query"], list)
 
-
+@pytest.mark.llm_call
 def test_start_job_research():
 
-    jobs = {
-        "job_role": ["Software Developer", "Data Scientist", "Product Manager"],
-        "job_role_description": [
-            "A Software Developer writes and maintains code for software applications.",
-            "A Data Scientist analyzes and interprets complex data to help companies make decisions.",
-            "A Product Manager oversees the development and delivery of products, ensuring they meet customer needs and business goals.",
-        ],
+    job = [
+        {"job_role": "software developer",
+            "job_role_description": "A Software Developer writes and maintains code for software applications.",
+        },
+        {"job_role": "data scientist",
+            "job_role_description": "A Data Scientist analyzes and interprets complex data to help companies make decisions.",
+        },
+        {"job_role": "product manager",
+            "job_role_description": "A Product Manager oversees the development and delivery of products, ensuring they meet customer needs and business goals.",
+        }
+    ]
 
-    }
-    selected_jobs = ["Software Developer", "Data Scientist"]
+    selected_jobs = ["software developer", "data scientist"]
 
     state = OverallState(
-        job_recommendations_data=jobs,
-        selected_jobs=selected_jobs,
+        job_recommendations_data=job,
+        selected_jobs=selected_jobs
     )
 
     result = start_job_research(state)
 
-    assert result["job_research_data"] is not None
+    # Update state with research results
+    assert result["job_research_data"]["job_recommendation"]["job_role"] == "software developer"
+    assert result["job_research_data"]["job_recommendation"]["research_status"] == "INITIALIZED"
+
+    state.update(result)
+    assert state["job_research_data"]["job_recommendation"]["job_role"] == "software developer"
+    assert state["job_research_data"]["job_recommendation"]["research_status"] == "INITIALIZED"

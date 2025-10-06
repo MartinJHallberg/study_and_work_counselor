@@ -66,6 +66,6 @@ RESEARCH_QUERY_PROMPT = """
     - Provide at least 5 research queries for each job role.
     - Format the research queries as a list of strings.
     
-    Job role:    {job_role}
-    Description: {job_role_description}
+    Job role:    {job}
+    Description: {description}
     """

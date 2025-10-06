@@ -116,8 +116,8 @@ def get_research_query(state: OverallState) -> ResearchState:
     structured_llm = llm.with_structured_output(ResearchQuery)
 
     formatted_prompt = RESEARCH_QUERY_PROMPT.format(
-        job_role=state.get("job_recommendations_data").get("job_role"),
-        job_role_description=state.get("job_recommendations_data").get("job_role_description")
+        job=state.get("job_recommendations_data").get("name"),
+        description=state.get("job_recommendations_data").get("description")
     )
     structured_response = structured_llm.invoke(formatted_prompt)
 
@@ -143,9 +143,11 @@ def start_job_research(state: OverallState) -> OverallState:
 
     job = candidate_job[0]
 
+    job_data = [job_ for job_ in state.get("job_recommendations_data") if job_["job_role"] == job][0]
+
     job_research_data = JobResearchData(
-        job_recommendation=JobRecommendationData(**state.get("job_recommendations_data")),
-        job_research_status=JobResearchStatus.INITIALIZED
+        job_recommendation=job_data,
+        research_status=JobResearchStatus.INITIALIZED
     )
     
     return {

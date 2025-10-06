@@ -79,18 +79,20 @@ class ProfileQuestions(StateModel):
         default=None, description="Follow-up questions to clarify the user's profile"
     )
 
+class Job(BaseModel):
+    name: str = Field(description="A recommended job role that matches the user's profile")
+    description: str = Field(description="A brief description of the recommended job role")
+
 class JobRecommendationData(StateModel):
-    job_role: List[str] | None = Field(
+    job : Job = Field(
         description="A recommended job role that matches the user's profile"
     )
-    job_role_description: List[str] | None = Field(
-        description="A brief description of the recommended job role"
-    )
+
     education: List[str] | None = Field(
         default=None,
         description="A list of educational paths or qualifications beneficial for the recommended job role"
     )
-    profile_match: List[str] = Field(
+    profile_match: str | None = Field(
         default=None,
         description="A list of profile attributes that make the user a good match for the recommended job role"
     )
@@ -118,8 +120,9 @@ class JobResearchStatus(StrEnum):
     COMPLETED = "completed"
 
 class JobResearchData(StateModel):
-    job_recommendation: JobRecommendationData = Field(
-        description="A job recommendation with associated research data"
+    job: Job | None = Field(
+        default=None,
+        description="The job role being researched"
     )
 
     research_query: ResearchQuery | None = Field(
