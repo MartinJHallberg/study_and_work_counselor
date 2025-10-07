@@ -154,9 +154,13 @@ def test_start_job_research(
 
     selected_jobs = ["software developer", "data scientist"]
 
+    selected_jobs_with_id = {job["name"]: job["job_id"] for job in jobs if job["name"] in selected_jobs}
+
+    selected_job_ids = list(selected_jobs_with_id.values())
+
     state = OverallState(
         job_recommendations_data=jobs,
-        selected_jobs=selected_jobs
+        research_queue=selected_job_ids,
     )
 
     result = start_job_research(state)
@@ -170,6 +174,8 @@ def test_start_job_research(
     assert len(state["job_research_data"]) == 1 # check that one job is in research
     assert state["job_research_data"][0]["job"]["name"] == "software developer"
     assert state["job_research_data"][0]["research_status"] == JobResearchStatus.INITIALIZED
+    assert state["current_research_job_id"] == selected_jobs_with_id["software developer"]
+    assert state["research_queue"] == [selected_jobs_with_id["data scientist"]]
 
 @pytest.mark.llm_call
 def test_conduct_research(

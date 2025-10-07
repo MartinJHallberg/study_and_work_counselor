@@ -9,7 +9,7 @@ from agent.models import (
     ProfileQuestions,
     JobRecommendationData,
     JobRecommendations,
-    ResearchQuery,
+    ResearchQueries,
     JobResearchData,
     JobResearchStatus,
 )
@@ -117,7 +117,7 @@ def get_job_recommendations(state: OverallState, number_of_recommendations = con
 
 def get_research_query(state: OverallState) -> OverallState:
     llm = get_llm()
-    structured_llm = llm.with_structured_output(ResearchQuery)
+    structured_llm = llm.with_structured_output(ResearchQueries)
 
     formatted_prompt = RESEARCH_QUERY_PROMPT.format(
         job=state.get("job_recommendations_data").get("name"),
@@ -133,71 +133,40 @@ def get_research_query(state: OverallState) -> OverallState:
 
 def start_job_research(state: OverallState) -> OverallState:
     """Initialize job research for selected jobs."""
-    selected_jobs = state.get("selected_jobs", [])
-    
-    if not selected_jobs:
+    queue = state.get("research_queue", [])
+
+    if not queue:
         return {
             "messages": [AIMessage(content="No jobs selected for research. Please select jobs first.")],
         }
-    
-    # Initialize research results dictionary
-    jobs_in_research = [job_res["job"]["name"] for job_res in state["job_research_data"]] if state.get("job_research_data") else []
 
-    candidate_job = [job for job in selected_jobs if job not in jobs_in_research]
+    job = queue[0]
 
-    job = candidate_job[0]
-
-    job_data = [job_ for job_ in state.get("job_recommendations_data") if job_["name"] == job][0]
+    job_data = [job_ for job_ in state.get("job_recommendations_data") if job_["job_id"] == job][0]
 
     job_research_data = JobResearchData(
         job=job_data,
         research_status=JobResearchStatus.INITIALIZED
     )
+
+    queue.remove(job)
     
     return {
-        "messages": [AIMessage(content=f"Starting research on {len(selected_jobs)} selected jobs. Beginning with: {job}")],
+        "messages": [AIMessage(content=f"Starting research on {job_data["name"]}")],
         "job_research_data": [job_research_data.model_dump()],
+        "current_research_job_id": job,
+        "research_queue": queue
     }
 
-def research_job(state: OverallState) -> OverallState:
-    """Conduct research on the job using the research query."""
-    if not state["job_research_data"]:
-        return {
-            "messages": [AIMessage(content="No job research initialized. Please start job research first.")],
-        }
-    
-    job_research = state["job_research_data"][0]  # Assuming single job research at a time
-    if job_research["research_status"] == JobResearchStatus.COMPLETED:
-        return {
-            "messages": [AIMessage(content=f"Research on {job_research['job']['name']} is already completed.")],
-        }
-    
-    llm = get_llm()
-    structured_llm = llm.with_structured_output(JobResearchData)
-
-    formatted_prompt = RESEARCH_QUERY_PROMPT.format(
-        job=job_research["job"]["name"],
-        description=job_research["job"]["description"]
-    )
-    structured_response = structured_llm.invoke(formatted_prompt)
-
-    # Update research status
-    job_research["research_query"] = structured_response.research_query
-    job_research["research_status"] = JobResearchStatus.RESEARCH_QUERY_GENERATED
-
-    return {
-        "messages": [AIMessage(content=f"Research queries generated for {job_research['job']['name']}.")],
-        "job_research_data": [job_research],
-    }
 
 def conduct_research(state: OverallState) -> OverallState:
     """Conducting research based on the research query."""
-    if not state["job_research_data"]:
+    if not state["research_data"]:
         return {
             "messages": [AIMessage(content="No job research initialized. Please start job research first.")],
         }
-    
-    job_research = state["job_research_data"][0]  # Assuming single job research at a time
+
+    job_research = state["research_data"][0]  # Assuming single job research at a time
     if job_research["research_status"] != JobResearchStatus.RESEARCH_QUERY_GENERATED:
         return {
             "messages": [AIMessage(content=f"Research on {job_research['job']['name']} is not ready to be conducted. Please generate research queries first.")],

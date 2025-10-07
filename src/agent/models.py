@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import List
 from enum import StrEnum
+import uuid
 
 
 class StateModel(BaseModel):
@@ -80,6 +81,7 @@ class ProfileQuestions(StateModel):
     )
 
 class Job(BaseModel):
+    job_id: str = Field(default_factory=lambda: str(uuid.uuid4()), description="Unique job identifier")
     name: str = Field(description="A recommended job role that matches the user's profile")
     description: str = Field(description="A brief description of the recommended job role")
 
@@ -109,8 +111,21 @@ class ResearchQueries(StateModel):
         description="A list of research queries based on the job recommendations"
     )
 
-class ResearchData(StateModel):
+
+class JobResearchStatus(StrEnum):
+    NOT_STARTED = "Not started"
+    INITIALIZED = "Initialized"
+    RESEARCH_QUERY_GENERATED = "Research query generated"
+    RESEARCH_IN_PROGRESS = "Research in progress"
+    EVALUATION_IN_PROGRESS = "Evaluation in progress"
+    COMPLETED = "completed"
+
+class JobResearchData(StateModel):
+    job: Job = Field(
+        description="The job role being researched"
+    )
     query: str | None = Field(
+        default=None,
         description="A research query based on the job recommendations"
     )
     results: List[str] | None = Field(
@@ -122,28 +137,23 @@ class ResearchData(StateModel):
         description="A list of sources for the research results"
     )
 
-
-
-class JobResearchStatus(StrEnum):
-    NOT_STARTED = "Not started"
-    INITIALIZED = "Initialized"
-    RESEARCH_QUERY_GENERATED = "Research query generated"
-    RESEARCH_IN_PROGRESS = "Research in progress"
-    EVALUATION_IN_PROGRESS = "Evaluation in progress"
-    COMPLETED = "completed"
-
-class JobResearch(StateModel):
-    job: Job | None = Field(
-        default=None,
-        description="The job role being researched"
-    )
-
-    research_data: List[ResearchData] | None = Field(
-        default=None,
-        description="A list of research data entries related to the job"
-    )
-
     research_status: JobResearchStatus = Field(
         default=JobResearchStatus.NOT_STARTED,
         description="The status of the research"
     )
+
+
+
+class JobResearch(StateModel):
+    job: Job = Field(
+        description="The job role being researched"
+    )
+
+    research_data: List[JobResearchData] | None = Field(
+        default=None,
+        description="A list of research data entries related to the job"
+    )
+
+    @property
+    def job_id(self) -> str:
+        return self.job.job_id
