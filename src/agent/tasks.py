@@ -25,7 +25,7 @@ from agent.prompts import (
     RESEARCH_PROMPT
 )
 from langchain_core.messages import AIMessage
-from config import NUMBER_OF_JOB_RECOMMENDATIONS
+from config import config
 
 
 def get_llm():
@@ -97,7 +97,7 @@ def ask_profile_questions(state: ProfilingState) -> OverallState:
     }
 
 
-def get_job_recommendations(state: OverallState, number_of_recommendations = NUMBER_OF_JOB_RECOMMENDATIONS) -> JobRecommendationState:
+def get_job_recommendations(state: OverallState, number_of_recommendations = config.number_of_job_recommendations) -> JobRecommendationState:
     llm = get_llm()
     structured_llm = llm.with_structured_output(JobRecommendations)
     current_profile_info = state.get("profile_information", None)
