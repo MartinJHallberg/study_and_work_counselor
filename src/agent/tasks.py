@@ -205,7 +205,7 @@ def conduct_research(state: OverallState) -> OverallState:
     
     llm = get_llm()
 
-    tools = [web_search, scrape_webpage]
+    tools = [web_search]
 
     llm_with_tools = llm.bind_tools(tools)
 
