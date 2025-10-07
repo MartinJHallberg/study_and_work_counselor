@@ -13,7 +13,7 @@ class Config(BaseSettings):
     openai_api_key: str = Field(..., env="OPENAI_API_KEY", description="OpenAI API key")
     tavily_api_key: str = Field(..., env="TAVILY_API_KEY", description="Tavily API key")
     number_of_job_recommendations: int = Field(10, description="Number of job recommendations to return")
-    tavily_max_search_results: int = Field(3, description="Maximum number of search results from Tavily")
+    tavily_max_search_results: int = Field(1, description="Maximum number of search results from Tavily")
     tavily_search_depth: str = Field("advanced", description="Depth of the search (e.g., shallow, deep)")
     tavily_include_raw_content: bool = Field(True, description="Whether to include raw content in search results")
     

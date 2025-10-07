@@ -93,8 +93,7 @@ class JobRecommendationData(StateModel):
         description="A list of educational paths or qualifications beneficial for the recommended job role"
     )
     profile_match: str | None = Field(
-        default=None,
-        description="A list of profile attributes that make the user a good match for the recommended job role"
+        description="Explanation of why this job matches the user's profile"
     )
 
 class JobRecommendations(StateModel):
@@ -105,10 +104,24 @@ class JobRecommendations(StateModel):
         description="A summary of the personal profile and how it relates to the recommended job roles"
     )
 
-class ResearchQuery(StateModel):
-    research_query: List[str] | None = Field(
+class ResearchQueries(StateModel):
+    queries: List[str] = Field(
         description="A list of research queries based on the job recommendations"
     )
+
+class ResearchData(StateModel):
+    query: str | None = Field(
+        description="A research query based on the job recommendations"
+    )
+    results: List[str] | None = Field(
+        default=None,
+        description="A list of research results obtained from the research query"
+    )
+    sources: List[str] | None = Field(
+        default=None,
+        description="A list of sources for the research results"
+    )
+
 
 
 class JobResearchStatus(StrEnum):
@@ -119,15 +132,15 @@ class JobResearchStatus(StrEnum):
     EVALUATION_IN_PROGRESS = "Evaluation in progress"
     COMPLETED = "completed"
 
-class JobResearchData(StateModel):
+class JobResearch(StateModel):
     job: Job | None = Field(
         default=None,
         description="The job role being researched"
     )
 
-    research_query: ResearchQuery | None = Field(
+    research_data: List[ResearchData] | None = Field(
         default=None,
-        description="A research query based on the job recommendation"
+        description="A list of research data entries related to the job"
     )
 
     research_status: JobResearchStatus = Field(

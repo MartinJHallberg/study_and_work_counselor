@@ -217,17 +217,19 @@ def conduct_research(state: OverallState) -> OverallState:
 
     response = llm_with_tools.invoke(formatted_prompt)
 
-    # Process the response to extract research results
-    research_results = response.get("research_results", [])
+    # Process tool calls if any
+    research_results = []
+    sources = []
+    
+    if hasattr(response, 'tool_calls') and response.tool_calls:
+        for tool_call in response.tool_calls:
+            # Execute the tool and collect results
+            tool_name = tool_call['name']
+            tool_args = tool_call['args']
+            
+            if tool_name == 'web_search':
+                result = web_search.invoke(tool_args)
+                research_results.append(result)
+                sources.append(f"Web search: {tool_args.get('query', '')}")
 
-    # Simulate research process (in real scenario, this could involve web scraping, API calls, etc.)
-    research_results = [f"Research result for query: {query}" for query in job_research["research_query"]]
-
-    # Update research status
-    job_research["research_status"] = JobResearchStatus.RESEARCH_IN_PROGRESS
-    job_research["research_results"] = research_results
-
-    return {
-        "messages": [AIMessage(content=f"Research conducted for {job_research['job']['name']}.")],
-        "job_research_data": [job_research],
-    }
+    
