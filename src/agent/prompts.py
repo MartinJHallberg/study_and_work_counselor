@@ -69,3 +69,16 @@ RESEARCH_QUERY_PROMPT = """
     Job role:    {job}
     Description: {description}
     """
+
+
+RESEARCH_PROMPT = """
+    You are a research agent. Conduct thorough research on: "{research_query}"
+    
+    Use the available tools to:
+    1. Search for general information
+    2. Look for academic sources if applicable
+    3. Gather diverse perspectives
+    4. Find recent and authoritative sources
+    
+    Be systematic and thorough in your approach.
+    """

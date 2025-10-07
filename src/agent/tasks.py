@@ -13,12 +13,16 @@ from agent.models import (
     JobResearchData,
     JobResearchStatus,
 )
+from agent.tools import(
+    web_search,
+)
 from langchain_openai import ChatOpenAI
 from agent.prompts import (
     PROFILE_INFORMATION_PROMPT,
     FOLLOW_UP_QUESTION_PROMPT,
     JOB_RECOMMENDATIONS_PROMPT,
     RESEARCH_QUERY_PROMPT,
+    RESEARCH_PROMPT
 )
 from langchain_core.messages import AIMessage
 from config import NUMBER_OF_JOB_RECOMMENDATIONS
@@ -93,7 +97,7 @@ def ask_profile_questions(state: ProfilingState) -> OverallState:
     }
 
 
-def get_job_recommendations(state: OverallState, number_of_recommendations: int=NUMBER_OF_JOB_RECOMMENDATIONS) -> JobRecommendationState:
+def get_job_recommendations(state: OverallState, number_of_recommendations = NUMBER_OF_JOB_RECOMMENDATIONS) -> JobRecommendationState:
     llm = get_llm()
     structured_llm = llm.with_structured_output(JobRecommendations)
     current_profile_info = state.get("profile_information", None)
@@ -111,7 +115,7 @@ def get_job_recommendations(state: OverallState, number_of_recommendations: int=
         "job_recommendations_data": job_recommendations_list,
     }
 
-def get_research_query(state: OverallState) -> ResearchState:
+def get_research_query(state: OverallState) -> OverallState:
     llm = get_llm()
     structured_llm = llm.with_structured_output(ResearchQuery)
 
@@ -153,4 +157,77 @@ def start_job_research(state: OverallState) -> OverallState:
     return {
         "messages": [AIMessage(content=f"Starting research on {len(selected_jobs)} selected jobs. Beginning with: {job}")],
         "job_research_data": [job_research_data.model_dump()],
+    }
+
+def research_job(state: OverallState) -> OverallState:
+    """Conduct research on the job using the research query."""
+    if not state["job_research_data"]:
+        return {
+            "messages": [AIMessage(content="No job research initialized. Please start job research first.")],
+        }
+    
+    job_research = state["job_research_data"][0]  # Assuming single job research at a time
+    if job_research["research_status"] == JobResearchStatus.COMPLETED:
+        return {
+            "messages": [AIMessage(content=f"Research on {job_research['job']['name']} is already completed.")],
+        }
+    
+    llm = get_llm()
+    structured_llm = llm.with_structured_output(JobResearchData)
+
+    formatted_prompt = RESEARCH_QUERY_PROMPT.format(
+        job=job_research["job"]["name"],
+        description=job_research["job"]["description"]
+    )
+    structured_response = structured_llm.invoke(formatted_prompt)
+
+    # Update research status
+    job_research["research_query"] = structured_response.research_query
+    job_research["research_status"] = JobResearchStatus.RESEARCH_QUERY_GENERATED
+
+    return {
+        "messages": [AIMessage(content=f"Research queries generated for {job_research['job']['name']}.")],
+        "job_research_data": [job_research],
+    }
+
+def conduct_research(state: OverallState) -> OverallState:
+    """Conducting research based on the research query."""
+    if not state["job_research_data"]:
+        return {
+            "messages": [AIMessage(content="No job research initialized. Please start job research first.")],
+        }
+    
+    job_research = state["job_research_data"][0]  # Assuming single job research at a time
+    if job_research["research_status"] != JobResearchStatus.RESEARCH_QUERY_GENERATED:
+        return {
+            "messages": [AIMessage(content=f"Research on {job_research['job']['name']} is not ready to be conducted. Please generate research queries first.")],
+        }
+    
+    llm = get_llm()
+
+    tools = [web_search, scrape_webpage]
+
+    llm_with_tools = llm.bind_tools(tools)
+
+    research_query = state["job_research_data"][0]["research_query"]
+
+    formatted_prompt = RESEARCH_PROMPT.format(
+        research_query=research_query
+    )
+
+    response = llm_with_tools.invoke(formatted_prompt)
+
+    # Process the response to extract research results
+    research_results = response.get("research_results", [])
+
+    # Simulate research process (in real scenario, this could involve web scraping, API calls, etc.)
+    research_results = [f"Research result for query: {query}" for query in job_research["research_query"]]
+
+    # Update research status
+    job_research["research_status"] = JobResearchStatus.RESEARCH_IN_PROGRESS
+    job_research["research_results"] = research_results
+
+    return {
+        "messages": [AIMessage(content=f"Research conducted for {job_research['job']['name']}.")],
+        "job_research_data": [job_research],
     }

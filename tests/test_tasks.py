@@ -4,7 +4,8 @@ from agent.tasks import (
     extract_profile_information,
     ask_profile_questions,
     get_research_query,
-    start_job_research
+    start_job_research,
+    conduct_research
 )
 from langgraph.graph import StateGraph
 from agent.state import OverallState, ProfilingState
@@ -170,3 +171,26 @@ def test_start_job_research(
     assert state["job_research_data"][0]["job"]["name"] == "software developer"
     assert state["job_research_data"][0]["research_status"] == JobResearchStatus.INITIALIZED
 
+@pytest.mark.llm_call
+def test_conduct_research(
+    software_developer,
+):
+
+    state = OverallState(
+
+        job_research_data=[
+            {
+                "job": software_developer.model_dump(),
+                "research_query": [
+                    "What are the main responsibilities of a Software Developer?",
+                    # "What programming languages should a Software Developer know?",
+                    # "What educational background is typically required for a Software Developer?",
+                    # "What are the common career paths for a Software Developer?",
+                    # "What is the job market outlook for Software Developers in the next 5 years?"
+                ],
+                "research_status": JobResearchStatus.RESEARCH_QUERY_GENERATED
+            }
+        ]
+    )
+
+    result = conduct_research(state)
