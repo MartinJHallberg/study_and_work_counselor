@@ -116,14 +116,13 @@ class JobResearchStatus(StrEnum):
     NOT_STARTED = "Not started"
     INITIALIZED = "Initialized"
     RESEARCH_QUERY_GENERATED = "Research query generated"
-    RESEARCH_IN_PROGRESS = "Research in progress"
-    EVALUATION_IN_PROGRESS = "Evaluation in progress"
+    RESEARCH_RESULTS_GATHERED = "Research results gathered"
+    ANALYSIS_COMPLETED = "Analysis completed"
     COMPLETED = "completed"
+    FAILED = "Failed"
 
 class JobResearchData(StateModel):
-    job: Job = Field(
-        description="The job role being researched"
-    )
+
     query: str | None = Field(
         default=None,
         description="A research query based on the job recommendations"
@@ -137,10 +136,6 @@ class JobResearchData(StateModel):
         description="A list of sources for the research results"
     )
 
-    research_status: JobResearchStatus = Field(
-        default=JobResearchStatus.NOT_STARTED,
-        description="The status of the research"
-    )
 
 
 
@@ -152,6 +147,11 @@ class JobResearch(StateModel):
     research_data: List[JobResearchData] | None = Field(
         default=None,
         description="A list of research data entries related to the job"
+    )
+
+    research_status: JobResearchStatus = Field(
+        default=JobResearchStatus.NOT_STARTED,
+        description="The status of the research"
     )
 
     @property

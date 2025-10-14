@@ -11,6 +11,7 @@ from agent.models import (
     JobRecommendations,
     ResearchQueries,
     JobResearchData,
+    JobResearch,
     JobResearchStatus,
 )
 from agent.tools import(
@@ -52,7 +53,7 @@ def get_conversation_history(state: OverallState) -> str:
 def extract_profile_information(state: OverallState) -> ProfilingState:
     # Extract and format user messages
     user_input_text = get_conversation_history(state)
-    current_profile_info = state["profile_data"]
+    current_profile_info = state.get("profile_information", None)
 
     llm = get_llm()  # Get LLM when needed
     structured_llm = llm.with_structured_output(ProfileInformation)
@@ -127,7 +128,7 @@ def get_research_query(state: OverallState) -> OverallState:
 
     return {
         "messages": [AIMessage(content="I've created a research plan. Let me start investigating...")],
-        "research_query": structured_response.research_query,
+        "research_query": structured_response.queries,
     }
 
 
@@ -161,44 +162,64 @@ def start_job_research(state: OverallState) -> OverallState:
 
 def conduct_research(state: OverallState) -> OverallState:
     """Conducting research based on the research query."""
-    if not state["research_data"]:
+    if not state["current_research_job_id"]:
         return {
-            "messages": [AIMessage(content="No job research initialized. Please start job research first.")],
-        }
-
-    job_research = state["research_data"][0]  # Assuming single job research at a time
-    if job_research["research_status"] != JobResearchStatus.RESEARCH_QUERY_GENERATED:
-        return {
-            "messages": [AIMessage(content=f"Research on {job_research['job']['name']} is not ready to be conducted. Please generate research queries first.")],
+            "messages": [AIMessage(content="No current job selected for research.")],
         }
     
+    job_id = state["current_research_job_id"]
+
+    job_research = [data for data in state["job_research"] if data["job"]["job_id"] == job_id][0]
+
+    if not job_research:
+        return {
+            "messages": [AIMessage(content="No research data found for the current job.")],
+        }
+
     llm = get_llm()
 
     tools = [web_search]
 
     llm_with_tools = llm.bind_tools(tools)
 
-    research_query = state["job_research_data"][0]["research_query"]
+    for entry in job_research["research_data"]:
+        research_query = entry["query"]
 
-    formatted_prompt = RESEARCH_PROMPT.format(
-        research_query=research_query
-    )
+        formatted_prompt = RESEARCH_PROMPT.format(
+            research_query=research_query
+        )
 
-    response = llm_with_tools.invoke(formatted_prompt)
+        response = llm_with_tools.invoke(formatted_prompt)
 
-    # Process tool calls if any
-    research_results = []
-    sources = []
-    
-    if hasattr(response, 'tool_calls') and response.tool_calls:
-        for tool_call in response.tool_calls:
-            # Execute the tool and collect results
-            tool_name = tool_call['name']
-            tool_args = tool_call['args']
-            
-            if tool_name == 'web_search':
-                result = web_search.invoke(tool_args)
-                research_results.append(result)
-                sources.append(f"Web search: {tool_args.get('query', '')}")
+        # Process tool calls if any
+        research_results = []
+        sources = []
+        entries = []
+        
+        if hasattr(response, 'tool_calls') and response.tool_calls:
+            for tool_call in response.tool_calls:
+                # Execute the tool and collect results
+                tool_name = tool_call['name']
+                tool_args = tool_call['args']
+                
+                if tool_name == 'web_search':
+                    result = web_search.invoke(tool_args)
+                    for item in result["results"]:
+                        research_results.append(item["title"] + ": " + item["content"] + ")")
+                        sources.append(item["url"])
+        entries.append(
+            JobResearchData(
+                query=research_query,
+                results=research_results,
+                sources=sources
+            )
+        )
 
-    
+        job_research = JobResearch(**job_research)
+        job_research.research_data = entries
+        job_research.research_status = JobResearchStatus.RESEARCH_RESULTS_GATHERED
+
+    return {
+        "messages": [AIMessage(content="Research completed.")],
+        "job_research": job_research.model_dump(),
+    }

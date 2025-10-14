@@ -1,4 +1,9 @@
-from agent.models import Job, JobResearchStatus
+from agent.models import (
+    Job,
+    JobResearchStatus,
+    JobResearch,
+    JobResearchData
+)
 from agent.tasks import (
     get_job_recommendations,
     extract_profile_information,
@@ -181,22 +186,27 @@ def test_start_job_research(
 def test_conduct_research(
     software_developer,
 ):
+    
+    job_research_data = JobResearchData(
+        query="What are the main responsibilities of a Software Developer?",
+    )
+    job_research = JobResearch(
+        job=software_developer,
+        research_data=[job_research_data],
+        research_status=JobResearchStatus.RESEARCH_QUERY_GENERATED
+    ).model_dump()
 
     state = OverallState(
-
-        job_research_data=[
-            {
-                "job": software_developer.model_dump(),
-                "research_query": [
-                    "What are the main responsibilities of a Software Developer?",
-                    # "What programming languages should a Software Developer know?",
-                    # "What educational background is typically required for a Software Developer?",
-                    # "What are the common career paths for a Software Developer?",
-                    # "What is the job market outlook for Software Developers in the next 5 years?"
-                ],
-                "research_status": JobResearchStatus.RESEARCH_QUERY_GENERATED
-            }
-        ]
+        job_research=[job_research],
+        current_research_job_id=software_developer.job_id,
     )
 
     result = conduct_research(state)
+
+    job_research_result = result["job_research"]
+
+    assert job_research_result["research_status"] == JobResearchStatus.RESEARCH_RESULTS_GATHERED
+    assert len(job_research_result["research_data"][0]["results"]) > 0
+    assert len(job_research_result["research_data"][0]["sources"]) > 0
+    assert job_research_result["research_data"][0]["query"] == "What are the main responsibilities of a Software Developer?"
+    assert result["messages"] is not None

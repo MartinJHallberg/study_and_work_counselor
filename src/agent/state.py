@@ -7,7 +7,7 @@ class OverallState(TypedDict):
     messages: Annotated[list, add_messages]
     profile_information: dict | None 
     job_recommendations: list[dict] | None
-    job_research_data: Annotated[list[dict], operator.add] | None
+    job_research: Annotated[list[dict], operator.add] | None
     current_research_job_id: str | None
     research_queue: list[str] | None
     completed_research_jobs: Annotated[list[str], operator.add] | None
