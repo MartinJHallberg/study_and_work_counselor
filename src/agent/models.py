@@ -139,6 +139,7 @@ class JobResearchData(StateModel):
 
 
 
+
 class JobResearch(StateModel):
     job: Job = Field(
         description="The job role being researched"
@@ -147,6 +148,11 @@ class JobResearch(StateModel):
     research_data: List[JobResearchData] | None = Field(
         default=None,
         description="A list of research data entries related to the job"
+    )
+
+    research_analysis: str | None = Field(
+        default=None,
+        description="An analysis of the research results"
     )
 
     research_status: JobResearchStatus = Field(

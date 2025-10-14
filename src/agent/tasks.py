@@ -216,3 +216,44 @@ def conduct_research(state: OverallState) -> OverallState:
         "messages": [AIMessage(content="Research completed.")],
         "job_research": job_research.model_dump(),
     }
+
+
+def analyze_research(state: OverallState) -> OverallState:
+    """Analyze the research results and summarize findings."""
+    if not state["current_research_job_id"]:
+        return {
+            "messages": [AIMessage(content="No current job selected for analysis.")],
+        }
+    
+    job_id = state["current_research_job_id"]
+    job_research = [data for data in state["job_research"] if data["job"]["job_id"] == job_id][0]
+
+    if not job_research or not job_research.get("research_data"):
+        return {
+            "messages": [AIMessage(content="No research data found for the current job.")],
+        }
+
+    llm = get_llm()
+
+    combined_results = "\n".join(
+        [
+            f"Query: {entry['query']}\nResults: {'; '.join(entry.get('results', []))}\nSources: {'; '.join(entry.get('sources', []))}"
+            for entry in job_research["research_data"] if entry.get("results")
+        ]
+    )
+
+    analysis_prompt = (
+        "Based on the following research results, provide a concise analysis summarizing key insights:\n"
+        f"{combined_results}"
+    )
+
+    response = llm.invoke(analysis_prompt)
+
+    job_research = JobResearch(**job_research)
+    job_research.research_analysis = response.content
+    job_research.research_status = JobResearchStatus.COMPLETED
+
+    return {
+        "messages": [AIMessage(content="Analysis completed.")],
+        "job_research": job_research.model_dump(),
+    }

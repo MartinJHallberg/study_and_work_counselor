@@ -10,7 +10,8 @@ from agent.tasks import (
     ask_profile_questions,
     get_research_query,
     start_job_research,
-    conduct_research
+    conduct_research,
+    analyze_research,
 )
 from langgraph.graph import StateGraph
 from agent.state import OverallState, ProfilingState
@@ -213,4 +214,55 @@ def test_conduct_research(
     assert job_research_result["research_status"] == JobResearchStatus.RESEARCH_RESULTS_GATHERED
     assert len(job_research_result["research_data"][0]["results"]) > 0
     assert len(job_research_result["research_data"][0]["sources"]) > 0
+    assert result["messages"] is not None
+
+
+@pytest.mark.llm_call
+def test_analyze_research(
+    software_developer,
+):
+    
+    job_research_data = [
+        JobResearchData(
+            query="What are the main responsibilities of a Software Developer?",
+            results=[
+                "Designing, coding, and testing software applications.",
+                "Collaborating with cross-functional teams to define project requirements.",
+                "Debugging and resolving software issues."
+            ],
+            sources=[
+                "https://www.example.com/software-developer-responsibilities",
+                "https://www.example.com/what-does-a-software-developer-do"
+            ]
+        ),
+        JobResearchData(
+            query="What skills are essential for a Software Developer?",
+            results=[
+                "Proficiency in programming languages such as Java, Python, or C#.",
+                "Strong problem-solving and analytical skills.",
+                "Experience with version control systems like Git."
+            ],
+            sources=[
+                "https://www.example.com/software-developer-skills",
+                "https://www.example.com/essential-skills-for-developers"
+            ]
+        )
+    ]
+    job_research = JobResearch(
+        job=software_developer,
+        research_data=job_research_data,
+        research_status=JobResearchStatus.RESEARCH_RESULTS_GATHERED
+    ).model_dump()
+
+    state = OverallState(
+        job_research=[job_research],
+        current_research_job_id=software_developer.job_id,
+    )
+
+    result = analyze_research(state)
+
+    job_research_result = result["job_research"]
+
+    assert job_research_result["research_status"] == JobResearchStatus.COMPLETED
+    assert isinstance(job_research_result["research_analysis"], str)
     assert result["messages"] is not None
