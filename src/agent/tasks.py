@@ -207,17 +207,17 @@ def conduct_research(state: OverallState) -> OverallState:
                     for item in result["results"]:
                         research_results.append(item["title"] + ": " + item["content"] + ")")
                         sources.append(item["url"])
-        entries.append(
-            JobResearchData(
-                query=research_query,
-                results=research_results,
-                sources=sources
+            entries.append(
+                JobResearchData(
+                    query=research_query,
+                    results=research_results,
+                    sources=sources
+                )
             )
-        )
 
-        job_research = JobResearch(**job_research)
-        job_research.research_data = entries
-        job_research.research_status = JobResearchStatus.RESEARCH_RESULTS_GATHERED
+    job_research = JobResearch(**job_research)
+    job_research.research_data = entries
+    job_research.research_status = JobResearchStatus.RESEARCH_RESULTS_GATHERED
 
     return {
         "messages": [AIMessage(content="Research completed.")],

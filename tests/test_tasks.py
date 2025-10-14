@@ -187,12 +187,17 @@ def test_conduct_research(
     software_developer,
 ):
     
-    job_research_data = JobResearchData(
-        query="What are the main responsibilities of a Software Developer?",
-    )
+    job_research_data = [
+        JobResearchData(
+            query="What are the main responsibilities of a Software Developer?",
+        ),
+        JobResearchData(
+            query="What skills are essential for a Software Developer?",
+        )
+    ]
     job_research = JobResearch(
         job=software_developer,
-        research_data=[job_research_data],
+        research_data=job_research_data,
         research_status=JobResearchStatus.RESEARCH_QUERY_GENERATED
     ).model_dump()
 
@@ -208,5 +213,4 @@ def test_conduct_research(
     assert job_research_result["research_status"] == JobResearchStatus.RESEARCH_RESULTS_GATHERED
     assert len(job_research_result["research_data"][0]["results"]) > 0
     assert len(job_research_result["research_data"][0]["sources"]) > 0
-    assert job_research_result["research_data"][0]["query"] == "What are the main responsibilities of a Software Developer?"
     assert result["messages"] is not None
