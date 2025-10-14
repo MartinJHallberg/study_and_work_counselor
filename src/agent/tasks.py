@@ -25,7 +25,8 @@ from agent.prompts import (
     RESEARCH_QUERY_PROMPT,
     RESEARCH_PROMPT
 )
-from langchain_core.messages import AIMessage
+from langchain_core.messages import AIMessage, BaseMessage
+from langchain_core.messages.tool import ToolMessage
 from config import config
 
 
@@ -168,7 +169,6 @@ def conduct_research(state: OverallState) -> OverallState:
         }
     
     job_id = state["current_research_job_id"]
-
     job_research = [data for data in state["job_research"] if data["job"]["job_id"] == job_id][0]
 
     if not job_research:
@@ -177,43 +177,36 @@ def conduct_research(state: OverallState) -> OverallState:
         }
 
     llm = get_llm()
-
     tools = [web_search]
-
     llm_with_tools = llm.bind_tools(tools)
 
+    entries = []
+    
     for entry in job_research["research_data"]:
         research_query = entry["query"]
-
-        formatted_prompt = RESEARCH_PROMPT.format(
-            research_query=research_query
-        )
-
+        formatted_prompt = RESEARCH_PROMPT.format(research_query=research_query)
         response = llm_with_tools.invoke(formatted_prompt)
 
-        # Process tool calls if any
         research_results = []
         sources = []
-        entries = []
         
-        if hasattr(response, 'tool_calls') and response.tool_calls:
-            for tool_call in response.tool_calls:
-                # Execute the tool and collect results
-                tool_name = tool_call['name']
-                tool_args = tool_call['args']
-                
-                if tool_name == 'web_search':
-                    result = web_search.invoke(tool_args)
+        # Check if response has tool_calls attribute and it's not empty
+        tool_calls = getattr(response, 'tool_calls', None)
+        if tool_calls:
+            for tool_call in tool_calls:
+                if tool_call['name'] == 'web_search':
+                    result = web_search.invoke(tool_call['args'])
                     for item in result["results"]:
-                        research_results.append(item["title"] + ": " + item["content"] + ")")
+                        research_results.append(f"{item['title']}: {item['content']}")
                         sources.append(item["url"])
-            entries.append(
-                JobResearchData(
-                    query=research_query,
-                    results=research_results,
-                    sources=sources
-                )
+        
+        entries.append(
+            JobResearchData(
+                query=research_query,
+                results=research_results,
+                sources=sources
             )
+        )
 
     job_research = JobResearch(**job_research)
     job_research.research_data = entries
