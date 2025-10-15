@@ -103,44 +103,18 @@ def test_get_job_recommendations_with_complete_profile():
 
 
 @pytest.mark.llm_call
-def test_research_query():
-
-    job = Job(
-        name="Software Developer",
-        description="A Software Developer writes and maintains code for software applications.",
-    )
+def test_research_query(
+    software_developer
+):
 
     state = OverallState(
-        job_recommendations_data=job.model_dump()
+        job_recommendations_data=software_developer.model_dump()
     )
 
     result = get_research_query(state)
 
     assert result["research_query"] is not None
     assert isinstance(result["research_query"], list)
-
-
-@pytest.fixture
-def software_developer():
-    return Job(
-        name="software developer",
-        description="A Software Developer writes and maintains code for software applications.",
-    )
-
-@pytest.fixture
-def data_scientist():
-    return Job(
-        name="data scientist",
-        description="A Data Scientist analyzes and interprets complex data to help companies make decisions.",
-    )
-
-@pytest.fixture
-def product_manager():
-    return Job(
-        name="product manager",
-        description="A Product Manager oversees the development and delivery of products, ensuring they meet customer needs and business goals.",
-    )
-
 
 
 @pytest.mark.llm_call
