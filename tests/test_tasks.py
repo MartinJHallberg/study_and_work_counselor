@@ -2,7 +2,8 @@ from agent.models import (
     Job,
     JobResearchStatus,
     JobResearch,
-    JobResearchData
+    JobResearchData,
+    ProfileInformation
 )
 from agent.tasks import (
     get_job_recommendations,
@@ -36,22 +37,85 @@ def test_extract_profile_information_with_minimal_input():
 def test_extract_profile_information_with_previous_data():
 
     interests = ["technology", "innovation"]
+
+    profile_information = ProfileInformation(
+        age=18,
+        interests=interests,
+        competencies=["Math", "History", "Arts"],
+        personal_characteristics=["analytical", "creative"],
+        is_locally_focused=False,
+        desired_job_characteristics=[
+            "small business",
+            "creative",
+            "innovative",
+            "not stressful",
+        ],
+        is_profile_complete=False,
+    )
+
     state = OverallState(
         messages=[{"role": "user", "content": MINIMAL_PROFILE_MESSAGE}],
-        profile_data={
-            "age": 18,
-            "interests": interests,
-            "competencies": ["Math", "History", "Arts"],
-            "personal_characteristics": ["analytical", "creative"],
-            "is_locally_focused": False,
-            "desired_job_characteristics": [
-                "small business",
-                "creative",
-                "innovative",
-                "not stressful",
-            ],
-            "is_profile_complete": False,
-        },
+        profile_information=profile_information.model_dump()
+    )
+
+    result = extract_profile_information(state)
+
+    assert result["profile_information"]["interests"] is not None
+    assert result["profile_information"]["personal_characteristics"] is not None
+
+@pytest.mark.llm_call
+def test_extract_profile_information_with_previous_data():
+
+    interests = ["technology", "innovation"]
+
+    profile_information = ProfileInformation(
+        age=18,
+        interests=interests,
+        competencies=["Math", "History", "Arts"],
+        personal_characteristics=["analytical", "creative"],
+        is_locally_focused=False,
+        desired_job_characteristics=[
+            "small business",
+            "creative",
+            "innovative",
+            "not stressful",
+        ],
+        is_profile_complete=False,
+    )
+
+    state = OverallState(
+        messages=[{"role": "user", "content": MINIMAL_PROFILE_MESSAGE}],
+        profile_information=profile_information.model_dump()
+    )
+
+    result = extract_profile_information(state)
+
+    assert result["profile_information"]["interests"] is not None
+    assert result["profile_information"]["personal_characteristics"] is not None
+
+@pytest.mark.llm_call
+def test_extract_profile_information_with_previous_data():
+
+    interests = ["technology", "innovation"]
+
+    profile_information = ProfileInformation(
+        age=18,
+        interests=interests,
+        competencies=["Math", "History", "Arts"],
+        personal_characteristics=["analytical", "creative"],
+        is_locally_focused=False,
+        desired_job_characteristics=[
+            "small business",
+            "creative",
+            "innovative",
+            "not stressful",
+        ],
+        is_profile_complete=False,
+    )
+
+    state = OverallState(
+        messages=[{"role": "user", "content": MINIMAL_PROFILE_MESSAGE}],
+        profile_information=profile_information.model_dump()
     )
 
     result = extract_profile_information(state)
@@ -146,14 +210,14 @@ def test_start_job_research(
     result = start_job_research(state)
 
     # Update state with research results
-    assert result["job_research_data"][0]["job"]["name"] == "software developer"
-    assert result["job_research_data"][0]["research_status"] == JobResearchStatus.INITIALIZED
+    assert result["job_research"][0]["job"]["name"] == "software developer"
+    assert result["job_research"][0]["research_status"] == JobResearchStatus.INITIALIZED
 
     state.update(result)
-    assert isinstance(state["job_research_data"], list)
-    assert len(state["job_research_data"]) == 1 # check that one job is in research
-    assert state["job_research_data"][0]["job"]["name"] == "software developer"
-    assert state["job_research_data"][0]["research_status"] == JobResearchStatus.INITIALIZED
+    assert isinstance(state["job_research"], list)
+    assert len(state["job_research"]) == 1 # check that one job is in research
+    assert state["job_research"][0]["job"]["name"] == "software developer"
+    assert state["job_research"][0]["research_status"] == JobResearchStatus.INITIALIZED
     assert state["current_research_job_id"] == selected_jobs_with_id["software developer"]
     assert state["research_queue"] == [selected_jobs_with_id["data scientist"]]
 

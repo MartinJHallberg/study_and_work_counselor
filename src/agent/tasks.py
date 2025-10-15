@@ -146,7 +146,7 @@ def start_job_research(state: OverallState) -> OverallState:
 
     job_data = [job_ for job_ in state.get("job_recommendations_data") if job_["job_id"] == job][0]
 
-    job_research_data = JobResearchData(
+    job_research = JobResearch(
         job=job_data,
         research_status=JobResearchStatus.INITIALIZED
     )
@@ -155,7 +155,7 @@ def start_job_research(state: OverallState) -> OverallState:
     
     return {
         "messages": [AIMessage(content=f"Starting research on {job_data["name"]}")],
-        "job_research_data": [job_research_data.model_dump()],
+        "job_research": [job_research.model_dump()],
         "current_research_job_id": job,
         "research_queue": queue
     }
