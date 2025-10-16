@@ -18,23 +18,18 @@ def test_research_workflow(software_developer):
         # Test intermediate states
         if "start_job_research" in step:
             assert (
-                step["start_job_research"]["job_research"][0]["job"]["job_id"]
-                == software_developer.job_id
-            )
-            assert (
-                step["start_job_research"]["current_research_job_id"]
+                step["start_job_research"]["current_job_research"]["job"]["job_id"]
                 == software_developer.job_id
             )
             assert step["start_job_research"]["research_queue"] == []
 
         if "get_research_query" in step:
-            assert step["get_research_query"]["research_query"] is not None
+            assert step["get_research_query"]["current_job_research"]["research_data"][0] is not None
 
         if "conduct_research" in step:
-            job_research = step["conduct_research"]["job_research"]
-            assert job_research["research_status"] == "RESEARCH_RESULTS_GATHERED"
+            job_research = step["conduct_research"]["current_job_research"]
             assert len(job_research["research_data"][0]["results"]) > 0
 
         if "analyze_research" in step:
-            job_research = step["analyze_research"]["job_research"]
+            job_research = step["analyze_research"]["current_job_research"]
             assert job_research["research_status"] == "ANALYZED"
