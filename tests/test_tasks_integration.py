@@ -3,8 +3,10 @@ from agent.graph import create_research_graph
 from agent.state import OverallState
 
 def test_research_workflow(software_developer):
+
+
     state = OverallState(
-        job_research=[software_developer.model_dump()],
+        job_recommendations=[software_developer.model_dump()],
         research_queue=[software_developer.job_id],
     )
 
@@ -17,8 +19,9 @@ def test_research_workflow(software_developer):
         
         # Test intermediate states
         if "start_job_research" in step:
-            assert step["start_job_research"]["job_research_data"] is not None
-            assert step["start_job_research"]["current_research_job_id"] is not None
+            assert step["start_job_research"]["job_research"][0]["job"]["job_id"] == software_developer.job_id
+            assert step["start_job_research"]["current_research_job_id"] == software_developer.job_id
+            assert step["start_job_research"]["research_queue"] == []
 
 
         if "get_research_query" in step:

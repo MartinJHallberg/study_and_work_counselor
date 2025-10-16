@@ -146,7 +146,7 @@ def start_job_research(state: OverallState) -> OverallState:
     job_id = queue[0]
     
     # Find the job data
-    job_recommendations = state.get("job_recommendations_data", [])
+    job_recommendations = state["job_recommendations"]
     job_data = None
     
     for job_rec in job_recommendations:

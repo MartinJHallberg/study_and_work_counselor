@@ -203,7 +203,7 @@ def test_start_job_research(
     selected_job_ids = list(selected_jobs_with_id.values())
 
     state = OverallState(
-        job_recommendations_data=jobs,
+        job_recommendations=jobs,
         research_queue=selected_job_ids,
     )
 
