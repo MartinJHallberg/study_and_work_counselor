@@ -9,12 +9,14 @@ def software_developer():
         description="A Software Developer writes and maintains code for software applications.",
     )
 
+
 @pytest.fixture
 def data_scientist():
     return Job(
         name="data scientist",
         description="A Data Scientist analyzes and interprets complex data to help companies make decisions.",
     )
+
 
 @pytest.fixture
 def product_manager():

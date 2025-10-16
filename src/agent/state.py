@@ -5,12 +5,12 @@ import operator
 
 class OverallState(TypedDict):
     messages: Annotated[list, add_messages]
-    profile_information: dict | None 
+    profile_information: dict | None
     job_recommendations: list[dict] | None
-    
+
     # Current research state - maintains full JobResearch structure
     current_job_research: dict | None  # Full JobResearch object
-    
+
     # Completed research collection
     completed_job_research: Annotated[list[dict], operator.add] | None
     research_queue: list[str] | None
@@ -33,6 +33,7 @@ class JobRecommendationState(TypedDict):
     job_role_description: list[str] | None
     education: list[str] | None
     profile_match: list[str] | None
+
 
 class ResearchState(TypedDict):
     messages: Annotated[list, add_messages]

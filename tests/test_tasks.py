@@ -1,9 +1,8 @@
 from agent.models import (
-    Job,
     JobResearchStatus,
     JobResearch,
     JobResearchData,
-    ProfileInformation
+    ProfileInformation,
 )
 from agent.tasks import (
     get_job_recommendations,
@@ -14,12 +13,10 @@ from agent.tasks import (
     conduct_research,
     analyze_research,
 )
-from langgraph.graph import StateGraph
-from agent.state import OverallState, ProfilingState
+from agent.state import OverallState
 import pytest
 
 MINIMAL_PROFILE_MESSAGE = "I like math, I am social and interested in arts."
-
 
 
 @pytest.mark.llm_call
@@ -33,9 +30,9 @@ def test_extract_profile_information_with_minimal_input():
     assert result["profile_information"]["interests"] is not None
     assert result["profile_information"]["personal_characteristics"] is not None
 
+
 @pytest.mark.llm_call
 def test_extract_profile_information_with_previous_data():
-
     interests = ["technology", "innovation"]
 
     profile_information = ProfileInformation(
@@ -55,7 +52,7 @@ def test_extract_profile_information_with_previous_data():
 
     state = OverallState(
         messages=[{"role": "user", "content": MINIMAL_PROFILE_MESSAGE}],
-        profile_information=profile_information.model_dump()
+        profile_information=profile_information.model_dump(),
     )
 
     result = extract_profile_information(state)
@@ -63,9 +60,9 @@ def test_extract_profile_information_with_previous_data():
     assert result["profile_information"]["interests"] is not None
     assert result["profile_information"]["personal_characteristics"] is not None
 
+
 @pytest.mark.llm_call
 def test_extract_profile_information_with_previous_data():
-
     interests = ["technology", "innovation"]
 
     profile_information = ProfileInformation(
@@ -85,7 +82,7 @@ def test_extract_profile_information_with_previous_data():
 
     state = OverallState(
         messages=[{"role": "user", "content": MINIMAL_PROFILE_MESSAGE}],
-        profile_information=profile_information.model_dump()
+        profile_information=profile_information.model_dump(),
     )
 
     result = extract_profile_information(state)
@@ -93,9 +90,9 @@ def test_extract_profile_information_with_previous_data():
     assert result["profile_information"]["interests"] is not None
     assert result["profile_information"]["personal_characteristics"] is not None
 
+
 @pytest.mark.llm_call
 def test_extract_profile_information_with_previous_data():
-
     interests = ["technology", "innovation"]
 
     profile_information = ProfileInformation(
@@ -115,14 +112,17 @@ def test_extract_profile_information_with_previous_data():
 
     state = OverallState(
         messages=[{"role": "user", "content": MINIMAL_PROFILE_MESSAGE}],
-        profile_information=profile_information.model_dump()
+        profile_information=profile_information.model_dump(),
     )
 
     result = extract_profile_information(state)
 
-    assert len(result["profile_information"]["interests"]) > len(interests) # Ensure interests are updated
+    assert len(result["profile_information"]["interests"]) > len(
+        interests
+    )  # Ensure interests are updated
     assert result["profile_information"]["personal_characteristics"] is not None
     assert result["profile_information"]["age"] == 18  # Ensure age remains unchanged
+
 
 @pytest.mark.llm_call
 def test_ask_profile_questions_with_minimal_input():
@@ -172,7 +172,6 @@ def test_start_job_research(
     data_scientist,
     product_manager,
 ):
-
     jobs = [
         software_developer,
         data_scientist,
@@ -183,7 +182,9 @@ def test_start_job_research(
 
     selected_jobs = ["software developer", "data scientist"]
 
-    selected_jobs_with_id = {job["name"]: job["job_id"] for job in jobs if job["name"] in selected_jobs}
+    selected_jobs_with_id = {
+        job["name"]: job["job_id"] for job in jobs if job["name"] in selected_jobs
+    }
 
     selected_job_ids = list(selected_jobs_with_id.values())
 
@@ -196,59 +197,68 @@ def test_start_job_research(
 
     # Update state with research results
     assert result["current_job_research"]["job"]["name"] == "software developer"
-    assert result["current_job_research"]["research_status"] == JobResearchStatus.INITIALIZED
-    assert result["current_job_research"]["job"]["job_id"] == selected_jobs_with_id["software developer"]
+    assert (
+        result["current_job_research"]["research_status"]
+        == JobResearchStatus.INITIALIZED
+    )
+    assert (
+        result["current_job_research"]["job"]["job_id"]
+        == selected_jobs_with_id["software developer"]
+    )
 
     state.update(result)
     assert isinstance(state["current_job_research"], dict)
     assert state["current_job_research"]["job"]["name"] == "software developer"
-    assert state["current_job_research"]["research_status"] == JobResearchStatus.INITIALIZED
-    assert state["current_job_research"]["job"]["job_id"] == selected_jobs_with_id["software developer"]
+    assert (
+        state["current_job_research"]["research_status"]
+        == JobResearchStatus.INITIALIZED
+    )
+    assert (
+        state["current_job_research"]["job"]["job_id"]
+        == selected_jobs_with_id["software developer"]
+    )
     assert state["research_queue"] == [selected_jobs_with_id["data scientist"]]
 
 
 @pytest.mark.llm_call
-def test_research_query(
-    software_developer
-):
-    
+def test_research_query(software_developer):
     job_research = JobResearch(
         job=software_developer,
-            research_data=[],
-        research_status=JobResearchStatus.INITIALIZED
+        research_data=[],
+        research_status=JobResearchStatus.INITIALIZED,
     )
 
-    state = OverallState(
-        current_job_research=job_research.model_dump()
-    )
+    state = OverallState(current_job_research=job_research.model_dump())
 
     result = get_research_query(state)
 
-    assert result["current_job_research"]["research_status"] == JobResearchStatus.RESEARCH_QUERY_GENERATED
+    assert (
+        result["current_job_research"]["research_status"]
+        == JobResearchStatus.RESEARCH_QUERY_GENERATED
+    )
     assert isinstance(result["current_job_research"]["research_data"], list)
-    queries = [data["query"] for data in result["current_job_research"]["research_data"]]
+    queries = [
+        data["query"] for data in result["current_job_research"]["research_data"]
+    ]
     assert all(isinstance(query, str) and query for query in queries)
-
-
 
 
 @pytest.mark.llm_call
 def test_conduct_research(
     software_developer,
 ):
-    
     job_research_data = [
         JobResearchData(
             query="What are the main responsibilities of a Software Developer?",
         ),
         JobResearchData(
             query="What skills are essential for a Software Developer?",
-        )
+        ),
     ]
     job_research = JobResearch(
         job=software_developer,
         research_data=job_research_data,
-        research_status=JobResearchStatus.RESEARCH_QUERY_GENERATED
+        research_status=JobResearchStatus.RESEARCH_QUERY_GENERATED,
     ).model_dump()
 
     state = OverallState(
@@ -259,7 +269,10 @@ def test_conduct_research(
 
     job_research_result = result["current_job_research"]
 
-    assert job_research_result["research_status"] == JobResearchStatus.RESEARCH_RESULTS_GATHERED
+    assert (
+        job_research_result["research_status"]
+        == JobResearchStatus.RESEARCH_RESULTS_GATHERED
+    )
     assert len(job_research_result["research_data"][0]["results"]) > 0
     assert len(job_research_result["research_data"][0]["sources"]) > 0
     assert result["messages"] is not None
@@ -269,42 +282,39 @@ def test_conduct_research(
 def test_analyze_research(
     software_developer,
 ):
-    
     job_research_data = [
         JobResearchData(
             query="What are the main responsibilities of a Software Developer?",
             results=[
                 "Designing, coding, and testing software applications.",
                 "Collaborating with cross-functional teams to define project requirements.",
-                "Debugging and resolving software issues."
+                "Debugging and resolving software issues.",
             ],
             sources=[
                 "https://www.example.com/software-developer-responsibilities",
-                "https://www.example.com/what-does-a-software-developer-do"
-            ]
+                "https://www.example.com/what-does-a-software-developer-do",
+            ],
         ),
         JobResearchData(
             query="What skills are essential for a Software Developer?",
             results=[
                 "Proficiency in programming languages such as Java, Python, or C#.",
                 "Strong problem-solving and analytical skills.",
-                "Experience with version control systems like Git."
+                "Experience with version control systems like Git.",
             ],
             sources=[
                 "https://www.example.com/software-developer-skills",
-                "https://www.example.com/essential-skills-for-developers"
-            ]
-        )
+                "https://www.example.com/essential-skills-for-developers",
+            ],
+        ),
     ]
     job_research = JobResearch(
         job=software_developer,
         research_data=job_research_data,
-        research_status=JobResearchStatus.RESEARCH_RESULTS_GATHERED
+        research_status=JobResearchStatus.RESEARCH_RESULTS_GATHERED,
     ).model_dump()
 
-    state = OverallState(
-        current_job_research=job_research
-    )
+    state = OverallState(current_job_research=job_research)
 
     result = analyze_research(state)
 

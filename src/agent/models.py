@@ -80,23 +80,32 @@ class ProfileQuestions(StateModel):
         default=None, description="Follow-up questions to clarify the user's profile"
     )
 
+
 class Job(BaseModel):
-    job_id: str = Field(default_factory=lambda: str(uuid.uuid4()), description="Unique job identifier")
-    name: str = Field(description="A recommended job role that matches the user's profile")
-    description: str = Field(description="A brief description of the recommended job role")
+    job_id: str = Field(
+        default_factory=lambda: str(uuid.uuid4()), description="Unique job identifier"
+    )
+    name: str = Field(
+        description="A recommended job role that matches the user's profile"
+    )
+    description: str = Field(
+        description="A brief description of the recommended job role"
+    )
+
 
 class JobRecommendationData(StateModel):
-    job : Job = Field(
+    job: Job = Field(
         description="A recommended job role that matches the user's profile"
     )
 
     education: List[str] | None = Field(
         default=None,
-        description="A list of educational paths or qualifications beneficial for the recommended job role"
+        description="A list of educational paths or qualifications beneficial for the recommended job role",
     )
     profile_match: str | None = Field(
         description="Explanation of why this job matches the user's profile"
     )
+
 
 class JobRecommendations(StateModel):
     job_recommendations: List[JobRecommendationData] = Field(
@@ -105,6 +114,7 @@ class JobRecommendations(StateModel):
     summary: str | None = Field(
         description="A summary of the personal profile and how it relates to the recommended job roles"
     )
+
 
 class ResearchQueries(StateModel):
     queries: List[str] = Field(
@@ -121,43 +131,33 @@ class JobResearchStatus(StrEnum):
     COMPLETED = "completed"
     FAILED = "Failed"
 
-class JobResearchData(StateModel):
 
+class JobResearchData(StateModel):
     query: str | None = Field(
-        default=None,
-        description="A research query based on the job recommendations"
+        default=None, description="A research query based on the job recommendations"
     )
     results: List[str] | None = Field(
         default=None,
-        description="A list of research results obtained from the research query"
+        description="A list of research results obtained from the research query",
     )
     sources: List[str] | None = Field(
-        default=None,
-        description="A list of sources for the research results"
+        default=None, description="A list of sources for the research results"
     )
-
-
-
 
 
 class JobResearch(StateModel):
-    job: Job = Field(
-        description="The job role being researched"
-    )
+    job: Job = Field(description="The job role being researched")
 
     research_data: List[JobResearchData] | None = Field(
-        default=None,
-        description="A list of research data entries related to the job"
+        default=None, description="A list of research data entries related to the job"
     )
 
     research_analysis: str | None = Field(
-        default=None,
-        description="An analysis of the research results"
+        default=None, description="An analysis of the research results"
     )
 
     research_status: JobResearchStatus = Field(
-        default=JobResearchStatus.NOT_STARTED,
-        description="The status of the research"
+        default=JobResearchStatus.NOT_STARTED, description="The status of the research"
     )
 
     @property

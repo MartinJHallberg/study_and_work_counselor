@@ -2,7 +2,6 @@ from agent.state import (
     OverallState,
     ProfilingState,
     JobRecommendationState,
-    ResearchState,
 )
 from agent.models import (
     Job,
@@ -15,7 +14,7 @@ from agent.models import (
     JobResearch,
     JobResearchStatus,
 )
-from agent.tools import(
+from agent.tools import (
     web_search,
 )
 from langchain_openai import ChatOpenAI
@@ -24,15 +23,15 @@ from agent.prompts import (
     FOLLOW_UP_QUESTION_PROMPT,
     JOB_RECOMMENDATIONS_PROMPT,
     RESEARCH_QUERY_PROMPT,
-    RESEARCH_PROMPT
+    RESEARCH_PROMPT,
 )
-from langchain_core.messages import AIMessage, BaseMessage
-from langchain_core.messages.tool import ToolMessage
+from langchain_core.messages import AIMessage
 from config import config
 
 
 def get_llm():
     return ChatOpenAI(model="gpt-4o-mini", temperature=0)
+
 
 def get_conversation_history(state: OverallState) -> str:
     messages = state["messages"]
@@ -100,7 +99,9 @@ def ask_profile_questions(state: ProfilingState) -> OverallState:
     }
 
 
-def get_job_recommendations(state: OverallState, number_of_recommendations = config.number_of_job_recommendations) -> JobRecommendationState:
+def get_job_recommendations(
+    state: OverallState, number_of_recommendations=config.number_of_job_recommendations
+) -> JobRecommendationState:
     llm = get_llm()
     structured_llm = llm.with_structured_output(JobRecommendations)
     current_profile_info = state.get("profile_information", None)
@@ -111,17 +112,21 @@ def get_job_recommendations(state: OverallState, number_of_recommendations = con
     )
     structured_response = structured_llm.invoke(formatted_prompt)
 
-    job_recommendations_list = [JobRecommendationData(**job) for job in structured_response.model_dump().get("job_recommendations", [])]
+    job_recommendations_list = [
+        JobRecommendationData(**job)
+        for job in structured_response.model_dump().get("job_recommendations", [])
+    ]
 
     return {
         "messages": [AIMessage(content=structured_response.summary)],
         "job_recommendations_data": job_recommendations_list,
     }
 
+
 def start_job_research(state: OverallState) -> OverallState:
     """Initialize job research for next job in queue."""
     queue = state.get("research_queue", [])
-    
+
     if not queue:
         return {
             "messages": [AIMessage(content="No jobs selected for research.")],
@@ -130,7 +135,7 @@ def start_job_research(state: OverallState) -> OverallState:
     job_id = queue[0]
     job_recommendations = state["job_recommendations"]
     job_data = None
-    
+
     for job_rec in job_recommendations:
         if job_rec["job_id"] == job_id:
             job_data = job_rec
@@ -145,20 +150,20 @@ def start_job_research(state: OverallState) -> OverallState:
     job_research = JobResearch(
         job=Job(**job_data),
         research_data=[],  # Initialize empty list for research entries
-        research_status=JobResearchStatus.INITIALIZED
+        research_status=JobResearchStatus.INITIALIZED,
     )
 
     return {
         "messages": [AIMessage(content=f"Starting research on {job_data['name']}")],
         "current_job_research": job_research.model_dump(),
-        "research_queue": queue[1:]
+        "research_queue": queue[1:],
     }
 
 
 def get_research_query(state: OverallState) -> OverallState:
     """Generate research queries and create JobResearchData entries."""
     current_job = state["current_job_research"]
-    
+
     if not current_job:
         return {
             "messages": [AIMessage(content="No current job research found.")],
@@ -168,8 +173,7 @@ def get_research_query(state: OverallState) -> OverallState:
     structured_llm = llm.with_structured_output(ResearchQueries)
 
     formatted_prompt = RESEARCH_QUERY_PROMPT.format(
-        job=current_job["job"]["name"],
-        description=current_job["job"]["description"]
+        job=current_job["job"]["name"], description=current_job["job"]["description"]
     )
     structured_response = structured_llm.invoke(formatted_prompt)
 
@@ -180,7 +184,7 @@ def get_research_query(state: OverallState) -> OverallState:
             JobResearchData(
                 query=query,
                 results=None,  # Will be filled in conduct_research
-                sources=None   # Will be filled in conduct_research
+                sources=None,  # Will be filled in conduct_research
             ).model_dump()
         )
 
@@ -190,7 +194,9 @@ def get_research_query(state: OverallState) -> OverallState:
     updated_research.research_status = JobResearchStatus.RESEARCH_QUERY_GENERATED
 
     return {
-        "messages": [AIMessage(content="Research queries generated. Starting research...")],
+        "messages": [
+            AIMessage(content="Research queries generated. Starting research...")
+        ],
         "current_job_research": updated_research.model_dump(),
     }
 
@@ -198,7 +204,7 @@ def get_research_query(state: OverallState) -> OverallState:
 def conduct_research(state: OverallState) -> OverallState:
     """Conduct research for each query in the current job research."""
     current_research = state.get("current_job_research")
-    
+
     if not current_research or not current_research.get("research_data"):
         return {
             "messages": [AIMessage(content="No research queries found.")],
@@ -209,7 +215,7 @@ def conduct_research(state: OverallState) -> OverallState:
     llm_with_tools = llm.bind_tools(tools)
 
     updated_entries = []
-    
+
     # Process each research data entry
     for entry_data in current_research["research_data"]:
         research_query = entry_data["query"]
@@ -218,22 +224,20 @@ def conduct_research(state: OverallState) -> OverallState:
 
         research_results = []
         sources = []
-        
+
         # Check if response has tool_calls
-        tool_calls = getattr(response, 'tool_calls', None)
+        tool_calls = getattr(response, "tool_calls", None)
         if tool_calls:
             for tool_call in tool_calls:
-                if tool_call['name'] == 'web_search':
-                    result = web_search.invoke(tool_call['args'])
+                if tool_call["name"] == "web_search":
+                    result = web_search.invoke(tool_call["args"])
                     for item in result["results"]:
                         research_results.append(f"{item['title']}: {item['content']}")
                         sources.append(item["url"])
-        
+
         # Update the entry with results
         updated_entry = JobResearchData(
-            query=research_query,
-            results=research_results,
-            sources=sources
+            query=research_query, results=research_results, sources=sources
         )
         updated_entries.append(updated_entry.model_dump())
 
@@ -251,7 +255,7 @@ def conduct_research(state: OverallState) -> OverallState:
 def analyze_research(state: OverallState) -> OverallState:
     """Analyze the research results and complete the job research."""
     current_research = state.get("current_job_research")
-    
+
     if not current_research or not current_research.get("research_data"):
         return {
             "messages": [AIMessage(content="No research data found for analysis.")],
@@ -263,13 +267,15 @@ def analyze_research(state: OverallState) -> OverallState:
     combined_results = []
     for entry in current_research["research_data"]:
         if entry.get("results"):
-            query_summary = f"Query: {entry['query']}\nResults: {'; '.join(entry['results'])}"
+            query_summary = (
+                f"Query: {entry['query']}\nResults: {'; '.join(entry['results'])}"
+            )
             if entry.get("sources"):
                 query_summary += f"\nSources: {'; '.join(entry['sources'])}"
             combined_results.append(query_summary)
 
     combined_text = "\n\n".join(combined_results)
-    
+
     analysis_prompt = (
         "Based on the following research results, provide a concise analysis summarizing key insights:\n"
         f"{combined_text}"
@@ -285,5 +291,5 @@ def analyze_research(state: OverallState) -> OverallState:
     return {
         "messages": [AIMessage(content="Research analysis completed.")],
         "completed_job_research": [updated_research.model_dump()],
-        "current_job_research": None  # Clear current research
+        "current_job_research": None,  # Clear current research
     }

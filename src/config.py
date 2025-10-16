@@ -1,5 +1,3 @@
-import os
-from typing import Optional
 from pydantic_settings import BaseSettings
 from pydantic import Field
 from dotenv import load_dotenv
@@ -9,18 +7,26 @@ load_dotenv()
 
 class Config(BaseSettings):
     """Application configuration using Pydantic BaseSettings."""
-    
+
     openai_api_key: str = Field(..., env="OPENAI_API_KEY", description="OpenAI API key")
     tavily_api_key: str = Field(..., env="TAVILY_API_KEY", description="Tavily API key")
-    number_of_job_recommendations: int = Field(10, description="Number of job recommendations to return")
-    tavily_max_search_results: int = Field(2, description="Maximum number of search results from Tavily")
-    tavily_search_depth: str = Field("advanced", description="Depth of the search (e.g., shallow, deep)")
-    tavily_include_raw_content: bool = Field(True, description="Whether to include raw content in search results")
-    
+    number_of_job_recommendations: int = Field(
+        10, description="Number of job recommendations to return"
+    )
+    tavily_max_search_results: int = Field(
+        2, description="Maximum number of search results from Tavily"
+    )
+    tavily_search_depth: str = Field(
+        "advanced", description="Depth of the search (e.g., shallow, deep)"
+    )
+    tavily_include_raw_content: bool = Field(
+        True, description="Whether to include raw content in search results"
+    )
+
     model_config = {
         "env_file": ".env",
         "env_file_encoding": "utf-8",
-        "case_sensitive": False
+        "case_sensitive": False,
     }
 
 
