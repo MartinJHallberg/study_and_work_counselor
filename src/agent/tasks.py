@@ -5,6 +5,7 @@ from agent.state import (
     ResearchState,
 )
 from agent.models import (
+    Job,
     ProfileInformation,
     ProfileQuestions,
     JobRecommendationData,
@@ -142,22 +143,38 @@ def start_job_research(state: OverallState) -> OverallState:
             "messages": [AIMessage(content="No jobs selected for research. Please select jobs first.")],
         }
 
-    job = queue[0]
+    job_id = queue[0]
+    
+    # Find the job data
+    job_recommendations = state.get("job_recommendations_data", [])
+    job_data = None
+    
+    for job_rec in job_recommendations:
+        if job_rec["job_id"] == job_id:
+            job_data = job_rec
+            break
 
-    job_data = [job_ for job_ in state.get("job_recommendations_data") if job_["job_id"] == job][0]
+    job_data = Job(**job_data) if job_data else None
+    
+    if not job_data:
+        return {
+            "messages": [AIMessage(content=f"Job with ID {job_id} not found in recommendations.")],
+        }
 
+    # Create initial job research entry
     job_research = JobResearch(
         job=job_data,
         research_status=JobResearchStatus.INITIALIZED
     )
 
-    queue.remove(job)
+    # Remove processed job from queue
+    updated_queue = queue[1:]
     
     return {
-        "messages": [AIMessage(content=f"Starting research on {job_data["name"]}")],
+        "messages": [AIMessage(content=f"Starting research on {job_data.name}")],
         "job_research": [job_research.model_dump()],
-        "current_research_job_id": job,
-        "research_queue": queue
+        "current_research_job_id": job_id,
+        "research_queue": updated_queue
     }
 
 

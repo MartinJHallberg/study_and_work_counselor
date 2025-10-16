@@ -4,7 +4,7 @@ from agent.state import OverallState
 
 def test_research_workflow(software_developer):
     state = OverallState(
-        job_recommendations_data=[software_developer.model_dump()],
+        job_research=[software_developer.model_dump()],
         research_queue=[software_developer.job_id],
     )
 
