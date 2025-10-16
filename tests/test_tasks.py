@@ -167,21 +167,6 @@ def test_get_job_recommendations_with_complete_profile():
 
 
 @pytest.mark.llm_call
-def test_research_query(
-    software_developer
-):
-
-    state = OverallState(
-        job_recommendations_data=software_developer.model_dump()
-    )
-
-    result = get_research_query(state)
-
-    assert result["research_query"] is not None
-    assert isinstance(result["research_query"], list)
-
-
-@pytest.mark.llm_call
 def test_start_job_research(
     software_developer,
     data_scientist,
@@ -210,16 +195,34 @@ def test_start_job_research(
     result = start_job_research(state)
 
     # Update state with research results
-    assert result["job_research"][0]["job"]["name"] == "software developer"
-    assert result["job_research"][0]["research_status"] == JobResearchStatus.INITIALIZED
+    assert result["current_job_research"]["job"]["name"] == "software developer"
+    assert result["current_job_research"]["research_status"] == JobResearchStatus.INITIALIZED
+    assert result["current_job_research"]["job"]["job_id"] == selected_jobs_with_id["software developer"]
 
     state.update(result)
-    assert isinstance(state["job_research"], list)
-    assert len(state["job_research"]) == 1 # check that one job is in research
-    assert state["job_research"][0]["job"]["name"] == "software developer"
-    assert state["job_research"][0]["research_status"] == JobResearchStatus.INITIALIZED
-    assert state["current_research_job_id"] == selected_jobs_with_id["software developer"]
+    assert isinstance(state["current_job_research"], dict)
+    assert state["current_job_research"]["job"]["name"] == "software developer"
+    assert state["current_job_research"]["research_status"] == JobResearchStatus.INITIALIZED
+    assert state["current_job_research"]["job"]["job_id"] == selected_jobs_with_id["software developer"]
     assert state["research_queue"] == [selected_jobs_with_id["data scientist"]]
+
+
+@pytest.mark.llm_call
+def test_research_query(
+    software_developer
+):
+
+    state = OverallState(
+        job_recommendations=software_developer.model_dump()
+    )
+
+    result = get_research_query(state)
+
+    assert result["research_query"] is not None
+    assert isinstance(result["research_query"], list)
+
+
+
 
 @pytest.mark.llm_call
 def test_conduct_research(

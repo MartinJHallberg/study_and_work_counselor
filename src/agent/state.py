@@ -7,10 +7,13 @@ class OverallState(TypedDict):
     messages: Annotated[list, add_messages]
     profile_information: dict | None 
     job_recommendations: list[dict] | None
-    job_research: Annotated[list[dict], operator.add] | None
-    current_research_job_id: str | None
+    
+    # Current research state - maintains full JobResearch structure
+    current_job_research: dict | None  # Full JobResearch object
+    
+    # Completed research collection
+    completed_job_research: Annotated[list[dict], operator.add] | None
     research_queue: list[str] | None
-    completed_research_jobs: Annotated[list[str], operator.add] | None
 
 
 class ProfilingState(TypedDict):
@@ -21,7 +24,7 @@ class ProfilingState(TypedDict):
     personal_characteristics: Annotated[list, operator.add] | None
     is_locally_focused: bool | None
     desired_job_characteristics: Annotated[list, operator.add] | None
-    do_profiling: bool  # Fixed typo: was "do_priofiling"
+    do_profiling: bool
 
 
 class JobRecommendationState(TypedDict):
