@@ -211,15 +211,23 @@ def test_start_job_research(
 def test_research_query(
     software_developer
 ):
+    
+    job_research = JobResearch(
+        job=software_developer,
+            research_data=[],
+        research_status=JobResearchStatus.INITIALIZED
+    )
 
     state = OverallState(
-        job_recommendations=software_developer.model_dump()
+        current_job_research=job_research.model_dump()
     )
 
     result = get_research_query(state)
 
-    assert result["research_query"] is not None
-    assert isinstance(result["research_query"], list)
+    assert result["current_job_research"]["research_status"] == JobResearchStatus.RESEARCH_QUERY_GENERATED
+    assert isinstance(result["current_job_research"]["research_data"], list)
+    queries = [data["query"] for data in result["current_job_research"]["research_data"]]
+    assert all(isinstance(query, str) and query for query in queries)
 
 
 

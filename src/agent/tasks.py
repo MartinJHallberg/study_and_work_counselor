@@ -157,9 +157,9 @@ def start_job_research(state: OverallState) -> OverallState:
 
 def get_research_query(state: OverallState) -> OverallState:
     """Generate research queries and create JobResearchData entries."""
-    current_research = state.get("current_job_research")
+    current_job = state["current_job_research"]
     
-    if not current_research:
+    if not current_job:
         return {
             "messages": [AIMessage(content="No current job research found.")],
         }
@@ -167,10 +167,9 @@ def get_research_query(state: OverallState) -> OverallState:
     llm = get_llm()
     structured_llm = llm.with_structured_output(ResearchQueries)
 
-    job_data = current_research["job"]
     formatted_prompt = RESEARCH_QUERY_PROMPT.format(
-        job=job_data["name"],
-        description=job_data.get("description", "")
+        job=current_job["job"]["name"],
+        description=current_job["job"]["description"]
     )
     structured_response = structured_llm.invoke(formatted_prompt)
 
@@ -186,7 +185,7 @@ def get_research_query(state: OverallState) -> OverallState:
         )
 
     # Update the current job research
-    updated_research = JobResearch(**current_research)
+    updated_research = JobResearch(**current_job)
     updated_research.research_data = research_data_entries
     updated_research.research_status = JobResearchStatus.RESEARCH_QUERY_GENERATED
 
