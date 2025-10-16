@@ -252,13 +252,12 @@ def test_conduct_research(
     ).model_dump()
 
     state = OverallState(
-        job_research=[job_research],
-        current_research_job_id=software_developer.job_id,
+        current_job_research=job_research,
     )
 
     result = conduct_research(state)
 
-    job_research_result = result["job_research"]
+    job_research_result = result["current_job_research"]
 
     assert job_research_result["research_status"] == JobResearchStatus.RESEARCH_RESULTS_GATHERED
     assert len(job_research_result["research_data"][0]["results"]) > 0
@@ -304,13 +303,12 @@ def test_analyze_research(
     ).model_dump()
 
     state = OverallState(
-        job_research=[job_research],
-        current_research_job_id=software_developer.job_id,
+        current_job_research=job_research
     )
 
     result = analyze_research(state)
 
-    job_research_result = result["job_research"]
+    job_research_result = result["completed_job_research"][0]
 
     assert job_research_result["research_status"] == JobResearchStatus.COMPLETED
     assert isinstance(job_research_result["research_analysis"], str)
