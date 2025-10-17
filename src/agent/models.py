@@ -127,8 +127,7 @@ class JobResearchStatus(StrEnum):
     INITIALIZED = "Initialized"
     RESEARCH_QUERY_GENERATED = "Research query generated"
     RESEARCH_RESULTS_GATHERED = "Research results gathered"
-    ANALYSIS_COMPLETED = "Analysis completed"
-    COMPLETED = "completed"
+    COMPLETED = "Completed"
     FAILED = "Failed"
 
 
