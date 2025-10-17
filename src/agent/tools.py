@@ -6,15 +6,15 @@ from langchain_core.runnables import RunnableConfig
 @tool
 def web_search(
     query: str,
-    config: RunnableConfig,
+    run_config: RunnableConfig,
 ) -> str:
     """Uses Tavily's official search API."""
     
     # Extract configuration values with fallback to defaults
-    max_results = config.configurable.get("max_search_results", config.config.max_search_results)
-    search_depth = config.configurable.get("search_depth", config.config.search_depth)
-    include_raw_content = config.configurable.get("include_raw_content", config.config.include_raw_content)
-    
+    max_results = run_config["configurable"].get("max_research_results", config.max_research_results)
+    search_depth = run_config["configurable"].get("research_depth", config.research_depth)
+    include_raw_content = run_config["configurable"].get("research_include_raw_content", config.research_include_raw_content)
+
     # Initialize search with configuration
     search = TavilySearch(
         max_results=max_results,

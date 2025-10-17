@@ -253,6 +253,7 @@ def test_research_query(
 @pytest.mark.llm_call
 def test_conduct_research(
     software_developer,
+    research_config_for_testing
 ):
     job_research_data = [
         JobResearchData(
@@ -272,7 +273,7 @@ def test_conduct_research(
         current_job_research=job_research,
     )
 
-    result = conduct_research(state)
+    result = conduct_research(state, config=research_config_for_testing)
 
     job_research_result = result["current_job_research"]
 

@@ -31,9 +31,9 @@ def research_config_for_testing():
     """Test configuration with reduced queries for faster tests."""
     return RunnableConfig(
                 configurable={
-                    "max_search_results": 1,
-                    "search_depth": "basic",
-                    "include_raw_content": False,
+                    "max_research_results": 1,
+                    "research_depth": "basic",
+                    "research_include_raw_content": False,
                     "number_of_research_queries": 2,
                 }
             )

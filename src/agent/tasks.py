@@ -210,7 +210,7 @@ def get_research_query(
     }
 
 
-def conduct_research(state: OverallState) -> OverallState:
+def conduct_research(state: OverallState, config: RunnableConfig=None) -> OverallState:
     """Conduct research for each query in the current job research."""
     current_research = state.get("current_job_research")
 
@@ -229,7 +229,7 @@ def conduct_research(state: OverallState) -> OverallState:
     for entry_data in current_research["research_data"]:
         research_query = entry_data["query"]
         formatted_prompt = RESEARCH_PROMPT.format(research_query=research_query)
-        response = llm_with_tools.invoke(formatted_prompt)
+        response = llm_with_tools.invoke(formatted_prompt, config=config)
 
         research_results = []
         sources = []
@@ -239,7 +239,7 @@ def conduct_research(state: OverallState) -> OverallState:
         if tool_calls:
             for tool_call in tool_calls:
                 if tool_call["name"] == "web_search":
-                    result = web_search.invoke(tool_call["args"])
+                    result = web_search.invoke(tool_call["args"], config=config)
                     for item in result["results"]:
                         research_results.append(f"{item['title']}: {item['content']}")
                         sources.append(item["url"])

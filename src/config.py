@@ -17,13 +17,13 @@ class Config(BaseSettings):
     number_of_research_queries: int = Field(
         5, description="Number of research queries to generate per job role"
     )
-    tavily_max_search_results: int = Field(
+    max_research_results: int = Field(
         2, description="Maximum number of search results from Tavily"
     )
-    tavily_search_depth: str = Field(
+    research_depth: str = Field(
         "advanced", description="Depth of the search (e.g., shallow, deep)"
     )
-    tavily_include_raw_content: bool = Field(
+    research_include_raw_content: bool = Field(
         True, description="Whether to include raw content in search results"
     )
 
@@ -39,9 +39,9 @@ class Config(BaseSettings):
             configurable={
                 "number_of_job_recommendations": self.number_of_job_recommendations,
                 "number_of_research_queries": self.number_of_research_queries,
-                "max_search_results": self.tavily_max_search_results,
-                "search_depth": self.tavily_search_depth,
-                "include_raw_content": self.tavily_include_raw_content,
+                "max_research_results": self.max_research_results,
+                "research_depth": self.research_depth,
+                "research_include_raw_content": self.research_include_raw_content,
             }
         )
 

@@ -10,6 +10,8 @@ from agent.tasks import (
 )
 from langgraph.graph import StateGraph
 from agent.state import OverallState
+from config import config
+from langchain_core.runnables import RunnableConfig
 
 builder = StateGraph(OverallState)
 
@@ -23,19 +25,23 @@ builder.add_node("get_job_recommendations", get_job_recommendations)
 
 
 # Get research subgraph
-def create_research_graph(number_of_queries=None):
+def create_research_graph(config: RunnableConfig = config.to_runnable_config) -> StateGraph:
     research_builder = StateGraph(OverallState)
 
     research_builder.add_node("start_job_research", start_job_research)
     research_builder.add_node("get_research_query",
                               lambda state: get_research_query(
                                   state,
-                                  number_of_queries=number_of_queries
+                                  config
                                   )
                                 )
-    research_builder.add_node("conduct_research", conduct_research)
-    
-    
+    research_builder.add_node("conduct_research",
+                              lambda state: conduct_research(
+                                  state,
+                                  config
+                                  )
+                              )
+
     research_builder.add_node("analyze_research", analyze_research)
 
     # Define the research flow
