@@ -24,3 +24,11 @@ def product_manager():
         name="product manager",
         description="A Product Manager oversees the development and delivery of products, ensuring they meet customer needs and business goals.",
     )
+
+@pytest.fixture
+def test_research_config():
+    """Test configuration with reduced queries for faster tests."""
+    return {
+        "number_of_queries": 1,
+        "max_search_results": 1,
+    }

@@ -63,7 +63,7 @@ RESEARCH_QUERY_PROMPT = """
     Instructions:
     - Use the job roles and their descriptions to generate relevant research queries.
     - Ensure that the research queries are specific and targeted to gather useful information about each job role.
-    - Provide at least 5 research queries for each job role.
+    - Provide at least {number_of_queries} research queries for each job role.
     - Format the research queries as a list of strings.
     
     Job role:    {job}

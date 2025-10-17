@@ -160,7 +160,10 @@ def start_job_research(state: OverallState) -> OverallState:
     }
 
 
-def get_research_query(state: OverallState) -> OverallState:
+def get_research_query(
+        state: OverallState,
+        number_of_queries: int = config.number_of_research_queries
+    ) -> OverallState:
     """Generate research queries and create JobResearchData entries."""
     current_job = state["current_job_research"]
 
@@ -173,7 +176,9 @@ def get_research_query(state: OverallState) -> OverallState:
     structured_llm = llm.with_structured_output(ResearchQueries)
 
     formatted_prompt = RESEARCH_QUERY_PROMPT.format(
-        job=current_job["job"]["name"], description=current_job["job"]["description"]
+        number_of_queries=number_of_queries,
+        job=current_job["job"]["name"],
+        description=current_job["job"]["description"]
     )
     structured_response = structured_llm.invoke(formatted_prompt)
 

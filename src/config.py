@@ -13,6 +13,9 @@ class Config(BaseSettings):
     number_of_job_recommendations: int = Field(
         10, description="Number of job recommendations to return"
     )
+    number_of_research_queries: int = Field(
+        5, description="Number of research queries to generate per job role"
+    )
     tavily_max_search_results: int = Field(
         2, description="Maximum number of search results from Tavily"
     )
