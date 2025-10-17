@@ -1,5 +1,6 @@
 import pytest
 from agent.models import Job
+from langchain_core.runnables import RunnableConfig
 
 
 @pytest.fixture
@@ -26,9 +27,13 @@ def product_manager():
     )
 
 @pytest.fixture
-def test_research_config():
+def research_config_for_testing():
     """Test configuration with reduced queries for faster tests."""
-    return {
-        "number_of_queries": 1,
-        "max_search_results": 1,
-    }
+    return RunnableConfig(
+                configurable={
+                    "max_search_results": 1,
+                    "search_depth": "basic",
+                    "include_raw_content": False,
+                    "number_of_research_queries": 2,
+                }
+            )

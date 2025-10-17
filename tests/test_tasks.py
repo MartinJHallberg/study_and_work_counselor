@@ -15,6 +15,7 @@ from agent.tasks import (
 )
 from agent.state import OverallState
 import pytest
+from langchain_core.runnables import RunnableConfig
 
 MINIMAL_PROFILE_MESSAGE = "I like math, I am social and interested in arts."
 
@@ -220,8 +221,13 @@ def test_start_job_research(
     assert state["research_queue"] == [selected_jobs_with_id["data scientist"]]
 
 
+
+
 @pytest.mark.llm_call
-def test_research_query(software_developer):
+def test_research_query(
+    software_developer,
+    research_config_for_testing
+    ):
     job_research = JobResearch(
         job=software_developer,
         research_data=[],
@@ -230,7 +236,7 @@ def test_research_query(software_developer):
 
     state = OverallState(current_job_research=job_research.model_dump())
 
-    result = get_research_query(state)
+    result = get_research_query(state, run_config=research_config_for_testing)
 
     assert (
         result["current_job_research"]["research_status"]
@@ -241,6 +247,7 @@ def test_research_query(software_developer):
         data["query"] for data in result["current_job_research"]["research_data"]
     ]
     assert all(isinstance(query, str) and query for query in queries)
+    assert len(queries) == research_config_for_testing["configurable"]["number_of_research_queries"]
 
 
 @pytest.mark.llm_call

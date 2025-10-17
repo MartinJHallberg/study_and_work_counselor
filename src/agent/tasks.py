@@ -26,6 +26,7 @@ from agent.prompts import (
     RESEARCH_PROMPT,
 )
 from langchain_core.messages import AIMessage
+from langchain_core.runnables import RunnableConfig
 from config import config
 
 
@@ -162,7 +163,7 @@ def start_job_research(state: OverallState) -> OverallState:
 
 def get_research_query(
         state: OverallState,
-        number_of_queries: int = config.number_of_research_queries
+        run_config: RunnableConfig=None,
     ) -> OverallState:
     """Generate research queries and create JobResearchData entries."""
     current_job = state["current_job_research"]
@@ -174,6 +175,9 @@ def get_research_query(
 
     llm = get_llm()
     structured_llm = llm.with_structured_output(ResearchQueries)
+
+    number_of_queries = run_config["configurable"].get("number_of_research_queries",
+                                               config.number_of_research_queries)
 
     formatted_prompt = RESEARCH_QUERY_PROMPT.format(
         number_of_queries=number_of_queries,

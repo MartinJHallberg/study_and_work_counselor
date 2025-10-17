@@ -1,6 +1,7 @@
 from pydantic_settings import BaseSettings
 from pydantic import Field
 from dotenv import load_dotenv
+from langchain_core.runnables import RunnableConfig
 
 load_dotenv()
 
@@ -31,6 +32,18 @@ class Config(BaseSettings):
         "env_file_encoding": "utf-8",
         "case_sensitive": False,
     }
+
+    def to_runnable_config(self) -> RunnableConfig:
+        """Convert to RunnableConfig for LangChain usage."""
+        return RunnableConfig(
+            configurable={
+                "number_of_job_recommendations": self.number_of_job_recommendations,
+                "number_of_research_queries": self.number_of_research_queries,
+                "max_search_results": self.tavily_max_search_results,
+                "search_depth": self.tavily_search_depth,
+                "include_raw_content": self.tavily_include_raw_content,
+            }
+        )
 
 
 # Create a global config instance
