@@ -25,7 +25,7 @@ builder.add_node("get_job_recommendations", get_job_recommendations)
 
 
 # Get research subgraph
-def create_research_graph(config: RunnableConfig = config.to_runnable_config) -> StateGraph:
+def create_research_graph(config: RunnableConfig = config.to_runnable_config()) -> StateGraph:
     research_builder = StateGraph(OverallState)
 
     research_builder.add_node("start_job_research", start_job_research)
