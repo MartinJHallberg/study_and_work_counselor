@@ -10,38 +10,19 @@ from agent.tasks import (
 )
 from langgraph.graph import StateGraph
 from agent.state import OverallState
-from config import config
-from langchain_core.runnables import RunnableConfig
-
-builder = StateGraph(OverallState)
 
 from langgraph.graph import StateGraph
 from agent.state import OverallState
-
-# Create nodes
-builder.add_node("extract_profile_information", extract_profile_information)
-builder.add_node("ask_profile_questions", ask_profile_questions)
-builder.add_node("get_job_recommendations", get_job_recommendations)
+from langgraph.checkpoint.base import BaseCheckpointSaver
 
 
 # Get research subgraph
-def create_research_graph(config: RunnableConfig = config.to_runnable_config()) -> StateGraph:
+def create_research_graph(checkpointer: BaseCheckpointSaver=None) -> StateGraph:
     research_builder = StateGraph(OverallState)
 
     research_builder.add_node("start_job_research", start_job_research)
-    research_builder.add_node("get_research_query",
-                              lambda state: get_research_query(
-                                  state,
-                                  config
-                                  )
-                                )
-    research_builder.add_node("conduct_research",
-                              lambda state: conduct_research(
-                                  state,
-                                  config
-                                  )
-                              )
-
+    research_builder.add_node("get_research_query", get_research_query)
+    research_builder.add_node("conduct_research", conduct_research)
     research_builder.add_node("analyze_research", analyze_research)
 
     # Define the research flow
@@ -51,21 +32,41 @@ def create_research_graph(config: RunnableConfig = config.to_runnable_config()) 
     research_builder.add_edge("conduct_research", "analyze_research")
     research_builder.add_edge("analyze_research", END)
 
-    return research_builder.compile()
+    if checkpointer:
+        return research_builder.compile(checkpointer=checkpointer)
+    else:
+        return research_builder.compile()
 
 
-builder.add_node("research_workflow", create_research_graph())
+def create_main_graph(checkpointer: BaseCheckpointSaver = None):
+    """Create the main application graph."""
+    builder = StateGraph(OverallState)
+
+    # Create nodes
+    builder.add_node("extract_profile_information", extract_profile_information)
+    builder.add_node("ask_profile_questions", ask_profile_questions)
+    builder.add_node("get_job_recommendations", get_job_recommendations)
+
+    # Add research subgraph
+    research_subgraph = create_research_graph(checkpointer=checkpointer)
+    builder.add_node("research_workflow", research_subgraph)
+
+    # Define the overall flow
+    builder.add_edge(START, "extract_profile_information")
+    builder.add_conditional_edges(
+        "extract_profile_information",
+        lambda state: state.get("do_profiling", True),
+        {True: "ask_profile_questions", False: "get_job_recommendations"},
+    )
+
+    builder.add_edge("get_job_recommendations", "research_workflow")
+    builder.add_edge("research_workflow", END)
+
+    if checkpointer:
+        return builder.compile(checkpointer=checkpointer)
+    else:
+        return builder.compile()
 
 
-# Define the overall flow
-builder.add_edge(START, "extract_profile_information")
-builder.add_conditional_edges(
-    "extract_profile_information",
-    lambda state: state.get("do_profiling", True),
-    {True: "ask_profile_questions", False: "get_job_recommendations"},
-)
-
-builder.add_edge("get_job_recommendations", "research_workflow")
-builder.add_edge("research_workflow", END)
-
-graph = builder.compile()
+# Default graph for production (no checkpointer)
+graph = create_main_graph()
