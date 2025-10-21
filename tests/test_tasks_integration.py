@@ -4,6 +4,7 @@ from agent.models import JobResearchStatus
 from enum import Enum
 from typing import Set, Dict, Any
 from langchain_core.runnables import RunnableConfig
+from langgraph.checkpoint.memory import MemorySaver
 
 
 class ResearchWorkflowState(Enum):
@@ -117,7 +118,7 @@ def test_research_workflow_state_updates_with_full_state(software_developer, res
         completed_job_research=[],
     )
 
-    research_graph = create_research_graph(config=research_config_for_testing)
+    research_graph = create_research_graph(checkpointer=MemorySaver())
     
     # Get initial thread/config for state tracking
 
