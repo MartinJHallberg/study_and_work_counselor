@@ -27,7 +27,7 @@ from agent.prompts import (
 )
 from langchain_core.messages import AIMessage
 from langchain_core.runnables import RunnableConfig
-from config import config
+from config import config as app_config
 
 
 def get_llm():
@@ -101,11 +101,17 @@ def ask_profile_questions(state: ProfilingState) -> OverallState:
 
 
 def get_job_recommendations(
-    state: OverallState, number_of_recommendations=config.number_of_job_recommendations
+    state: OverallState,
+    config: RunnableConfig=None,
 ) -> JobRecommendationState:
     llm = get_llm()
     structured_llm = llm.with_structured_output(JobRecommendations)
     current_profile_info = state.get("profile_information", None)
+
+    number_of_recommendations = config["configurable"].get(
+        "number_of_job_recommendations", app_config.number_of_job_recommendations
+    )
+
 
     formatted_prompt = JOB_RECOMMENDATIONS_PROMPT.format(
         number_of_recommendations=number_of_recommendations,
@@ -163,7 +169,7 @@ def start_job_research(state: OverallState) -> OverallState:
 
 def get_research_query(
         state: OverallState,
-        run_config: RunnableConfig=None,
+        config: RunnableConfig=None,
     ) -> OverallState:
     """Generate research queries and create JobResearchData entries."""
     current_job = state["current_job_research"]
@@ -176,8 +182,8 @@ def get_research_query(
     llm = get_llm()
     structured_llm = llm.with_structured_output(ResearchQueries)
 
-    number_of_queries = run_config["configurable"].get("number_of_research_queries",
-                                               config.number_of_research_queries)
+    number_of_queries = config["configurable"].get("number_of_research_queries",
+                                               app_config.number_of_research_queries)
 
     formatted_prompt = RESEARCH_QUERY_PROMPT.format(
         number_of_queries=number_of_queries,
@@ -224,6 +230,11 @@ def conduct_research(state: OverallState, config: RunnableConfig=None) -> Overal
     llm_with_tools = llm.bind_tools(tools)
 
     updated_entries = []
+
+    if config:
+        config = config
+    else:
+        config = app_config.to_runnable_config()
 
     # Process each research data entry
     for entry_data in current_research["research_data"]:
