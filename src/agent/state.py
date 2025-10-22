@@ -8,7 +8,7 @@ class OverallState(TypedDict):
     profile_information: dict | None
     job_recommendations: list[dict] | None
     current_job_research: dict | None 
-    completed_job_research: Annotated[list[dict], operator.add] | None
+    completed_job_research: Annotated[list[dict], operator.add]
     research_queue: list[str] | None
 
 
