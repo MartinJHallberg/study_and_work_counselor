@@ -11,16 +11,15 @@ from agent.tasks import (
 from langgraph.graph import StateGraph
 from agent.state import OverallState
 
-from langgraph.graph import StateGraph
-from agent.state import OverallState
 from langgraph.checkpoint.base import BaseCheckpointSaver
 
 
 def continue_research(state: OverallState) -> bool:
     return state.get("research_queue") is not None and len(state["research_queue"]) > 0
 
+
 # Get research subgraph
-def create_research_graph(checkpointer: BaseCheckpointSaver=None) -> StateGraph:
+def create_research_graph(checkpointer: BaseCheckpointSaver = None) -> StateGraph:
     research_builder = StateGraph(OverallState)
 
     research_builder.add_node("start_job_research", start_job_research)
@@ -33,8 +32,9 @@ def create_research_graph(checkpointer: BaseCheckpointSaver=None) -> StateGraph:
     research_builder.add_edge("start_job_research", "get_research_query")
     research_builder.add_edge("get_research_query", "conduct_research")
     research_builder.add_edge("conduct_research", "analyze_research")
-    research_builder.add_conditional_edges("analyze_research",
-                                           continue_research,
+    research_builder.add_conditional_edges(
+        "analyze_research",
+        continue_research,
         {True: "start_job_research", False: END},
     )
 

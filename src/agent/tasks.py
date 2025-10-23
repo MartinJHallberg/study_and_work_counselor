@@ -102,7 +102,7 @@ def ask_profile_questions(state: ProfilingState) -> OverallState:
 
 def get_job_recommendations(
     state: OverallState,
-    config: RunnableConfig=None,
+    config: RunnableConfig = None,
 ) -> JobRecommendationState:
     llm = get_llm()
     structured_llm = llm.with_structured_output(JobRecommendations)
@@ -111,7 +111,6 @@ def get_job_recommendations(
     number_of_recommendations = config["configurable"].get(
         "number_of_job_recommendations", app_config.number_of_job_recommendations
     )
-
 
     formatted_prompt = JOB_RECOMMENDATIONS_PROMPT.format(
         number_of_recommendations=number_of_recommendations,
@@ -168,9 +167,9 @@ def start_job_research(state: OverallState) -> OverallState:
 
 
 def get_research_query(
-        state: OverallState,
-        config: RunnableConfig=None,
-    ) -> OverallState:
+    state: OverallState,
+    config: RunnableConfig = None,
+) -> OverallState:
     """Generate research queries and create JobResearchData entries."""
     current_job = state["current_job_research"]
 
@@ -182,13 +181,14 @@ def get_research_query(
     llm = get_llm()
     structured_llm = llm.with_structured_output(ResearchQueries)
 
-    number_of_queries = config["configurable"].get("number_of_research_queries",
-                                               app_config.number_of_research_queries)
+    number_of_queries = config["configurable"].get(
+        "number_of_research_queries", app_config.number_of_research_queries
+    )
 
     formatted_prompt = RESEARCH_QUERY_PROMPT.format(
         number_of_queries=number_of_queries,
         job=current_job["job"]["name"],
-        description=current_job["job"]["description"]
+        description=current_job["job"]["description"],
     )
     structured_response = structured_llm.invoke(formatted_prompt)
 
@@ -216,7 +216,9 @@ def get_research_query(
     }
 
 
-def conduct_research(state: OverallState, config: RunnableConfig=None) -> OverallState:
+def conduct_research(
+    state: OverallState, config: RunnableConfig = None
+) -> OverallState:
     """Conduct research for each query in the current job research."""
     current_research = state.get("current_job_research")
 

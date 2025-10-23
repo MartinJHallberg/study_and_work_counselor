@@ -15,7 +15,6 @@ from agent.tasks import (
 )
 from agent.state import OverallState
 import pytest
-from langchain_core.runnables import RunnableConfig
 
 MINIMAL_PROFILE_MESSAGE = "I like math, I am social and interested in arts."
 
@@ -30,67 +29,6 @@ def test_extract_profile_information_with_minimal_input():
 
     assert result["profile_information"]["interests"] is not None
     assert result["profile_information"]["personal_characteristics"] is not None
-
-
-@pytest.mark.llm_call
-def test_extract_profile_information_with_previous_data():
-    interests = ["technology", "innovation"]
-
-    profile_information = ProfileInformation(
-        age=18,
-        interests=interests,
-        competencies=["Math", "History", "Arts"],
-        personal_characteristics=["analytical", "creative"],
-        is_locally_focused=False,
-        desired_job_characteristics=[
-            "small business",
-            "creative",
-            "innovative",
-            "not stressful",
-        ],
-        is_profile_complete=False,
-    )
-
-    state = OverallState(
-        messages=[{"role": "user", "content": MINIMAL_PROFILE_MESSAGE}],
-        profile_information=profile_information.model_dump(),
-    )
-
-    result = extract_profile_information(state)
-
-    assert result["profile_information"]["interests"] is not None
-    assert result["profile_information"]["personal_characteristics"] is not None
-
-
-@pytest.mark.llm_call
-def test_extract_profile_information_with_previous_data():
-    interests = ["technology", "innovation"]
-
-    profile_information = ProfileInformation(
-        age=18,
-        interests=interests,
-        competencies=["Math", "History", "Arts"],
-        personal_characteristics=["analytical", "creative"],
-        is_locally_focused=False,
-        desired_job_characteristics=[
-            "small business",
-            "creative",
-            "innovative",
-            "not stressful",
-        ],
-        is_profile_complete=False,
-    )
-
-    state = OverallState(
-        messages=[{"role": "user", "content": MINIMAL_PROFILE_MESSAGE}],
-        profile_information=profile_information.model_dump(),
-    )
-
-    result = extract_profile_information(state)
-
-    assert result["profile_information"]["interests"] is not None
-    assert result["profile_information"]["personal_characteristics"] is not None
-
 
 @pytest.mark.llm_call
 def test_extract_profile_information_with_previous_data():
@@ -221,13 +159,8 @@ def test_start_job_research(
     assert state["research_queue"] == [selected_jobs_with_id["data scientist"]]
 
 
-
-
 @pytest.mark.llm_call
-def test_research_query(
-    software_developer,
-    research_config_for_testing
-    ):
+def test_research_query(software_developer, research_config_for_testing):
     job_research = JobResearch(
         job=software_developer,
         research_data=[],
@@ -247,14 +180,14 @@ def test_research_query(
         data["query"] for data in result["current_job_research"]["research_data"]
     ]
     assert all(isinstance(query, str) and query for query in queries)
-    assert len(queries) == research_config_for_testing["configurable"]["number_of_research_queries"]
+    assert (
+        len(queries)
+        == research_config_for_testing["configurable"]["number_of_research_queries"]
+    )
 
 
 @pytest.mark.llm_call
-def test_conduct_research(
-    software_developer,
-    research_config_for_testing
-):
+def test_conduct_research(software_developer, research_config_for_testing):
     job_research_data = [
         JobResearchData(
             query="What are the main responsibilities of a Software Developer?",

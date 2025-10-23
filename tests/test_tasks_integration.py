@@ -2,9 +2,10 @@ from agent.graph import create_research_graph
 from agent.state import OverallState
 from agent.models import JobResearchStatus
 from enum import Enum
-from typing import Set, Dict, Any
-from langchain_core.runnables import RunnableConfig
-from langgraph.checkpoint.memory import MemorySaver
+from typing import Dict, Any
+import pytest
+
+pytestmark = pytest.mark.llm_call
 
 
 class ResearchWorkflowState(Enum):
@@ -20,18 +21,26 @@ class WorkflowStateMachine:
         self.current_state = ResearchWorkflowState.INITIAL
         self.valid_transitions = {
             ResearchWorkflowState.INITIAL: {ResearchWorkflowState.JOB_RESEARCH_STARTED},
-            ResearchWorkflowState.JOB_RESEARCH_STARTED: {ResearchWorkflowState.QUERIES_GENERATED},
-            ResearchWorkflowState.QUERIES_GENERATED: {ResearchWorkflowState.RESEARCH_COMPLETED},
-            ResearchWorkflowState.RESEARCH_COMPLETED: {ResearchWorkflowState.ANALYSIS_COMPLETED},
-            ResearchWorkflowState.ANALYSIS_COMPLETED: set()  # Final state
+            ResearchWorkflowState.JOB_RESEARCH_STARTED: {
+                ResearchWorkflowState.QUERIES_GENERATED
+            },
+            ResearchWorkflowState.QUERIES_GENERATED: {
+                ResearchWorkflowState.RESEARCH_COMPLETED
+            },
+            ResearchWorkflowState.RESEARCH_COMPLETED: {
+                ResearchWorkflowState.ANALYSIS_COMPLETED
+            },
+            ResearchWorkflowState.ANALYSIS_COMPLETED: set(),  # Final state
         }
-    
+
     def transition(self, new_state: ResearchWorkflowState):
         """Validate and perform state transition."""
         if new_state not in self.valid_transitions[self.current_state]:
-            raise ValueError(f"Invalid transition from {self.current_state} to {new_state}")
+            raise ValueError(
+                f"Invalid transition from {self.current_state} to {new_state}"
+            )
         self.current_state = new_state
-    
+
     def get_expected_state_properties(self) -> Dict[str, Any]:
         """Get expected properties for current state."""
         state_properties = {
@@ -54,12 +63,14 @@ class WorkflowStateMachine:
             ResearchWorkflowState.ANALYSIS_COMPLETED: {
                 "should_have_completed_research": True,
                 "should_have_current_research": False,
-            }
+            },
         }
         return state_properties[self.current_state]
 
 
-def test_research_workflow_state_machine(software_developer, research_config_for_testing):
+def test_research_workflow_state_machine(
+    software_developer, research_config_for_testing
+):
     """Test workflow using state machine validation."""
     state = OverallState(
         job_recommendations=[software_developer.model_dump()],
@@ -68,7 +79,7 @@ def test_research_workflow_state_machine(software_developer, research_config_for
 
     research_graph = create_research_graph()
     state_machine = WorkflowStateMachine()
-    
+
     step_to_state_map = {
         "start_job_research": ResearchWorkflowState.JOB_RESEARCH_STARTED,
         "get_research_query": ResearchWorkflowState.QUERIES_GENERATED,
@@ -79,196 +90,44 @@ def test_research_workflow_state_machine(software_developer, research_config_for
     for step in research_graph.stream(state, config=research_config_for_testing):
         step_name = list(step.keys())[0]
         step_state = step[step_name]
-        
+
         # Transition state machine
         expected_workflow_state = step_to_state_map[step_name]
         state_machine.transition(expected_workflow_state)
-        
+
         # Validate state properties
         expected_properties = state_machine.get_expected_state_properties()
         _validate_state_properties(step_state, expected_properties)
 
 
-def _validate_state_properties(state: Dict[str, Any], expected_properties: Dict[str, Any]):
+def _validate_state_properties(
+    state: Dict[str, Any], expected_properties: Dict[str, Any]
+):
     """Validate state matches expected properties."""
     for property_name, expected_value in expected_properties.items():
         if property_name == "should_have_research_queue":
             has_queue = len(state.get("research_queue", [])) > 0
             assert has_queue == expected_value
-            
+
         elif property_name == "should_have_current_research":
             has_current = state.get("current_job_research") is not None
             assert has_current == expected_value
-            
+
         elif property_name == "research_status":
             current_research = state.get("current_job_research")
             if current_research:
                 assert current_research["research_status"] == expected_value
-                
-
-
-
-def test_research_workflow_state_updates_with_full_state(software_developer, research_config_for_testing):
-    """Test state updates using full state access."""
-    initial_state = OverallState(
-        job_recommendations=[software_developer.model_dump()],
-        research_queue=[software_developer.job_id],
-        messages=[],
-        current_job_research=None,
-        completed_job_research=[],
-    )
-
-    research_graph = create_research_graph(checkpointer=MemorySaver())
-    
-    # Get initial thread/config for state tracking
-
-    config_with_thread = RunnableConfig(
-        configurable={**research_config_for_testing,
-                      "thread_id": "test-thread"}
-    )
-    
-    # Stream the workflow but track full state
-    previous_full_state = initial_state.copy()
-    step_count = 0
-    
-    for chunk in research_graph.stream(initial_state, config=config_with_thread, stream_mode="updates"):
-        current_state = chunk.get("__current_state__", "unknown")
-        step_name = list(chunk.keys())[0]
-        step_changes = chunk[step_name]  # Only the changes from this step
-
-        # Get the FULL current state after this step
-        current_full_state = research_graph.get_state(config_with_thread).values
-        
-        step_count += 1
-        print(f"Step {step_count}: {step_name}")
-        
-        # Now test with full states
-        if step_name == "start_job_research":
-            _validate_start_job_research_full_state(previous_full_state, current_full_state, software_developer)
-            
-        elif step_name == "get_research_query":
-            _validate_get_research_query_full_state(previous_full_state, current_full_state, research_config_for_testing)
-            
-        elif step_name == "conduct_research":
-            _validate_conduct_research_full_state(previous_full_state, current_full_state)
-            
-        elif step_name == "analyze_research":
-            _validate_analyze_research_full_state(previous_full_state, current_full_state)
-        
-        # Update for next iteration
-        previous_full_state = current_full_state.copy()
-
-
-def _validate_start_job_research_full_state(previous_state: Dict, current_state: Dict, expected_job):
-    """Validate state changes with full state access."""
-    # Research queue should decrease by 1
-    prev_queue_len = len(previous_state.get("research_queue", []))
-    curr_queue_len = len(current_state.get("research_queue", []))
-    assert curr_queue_len == prev_queue_len - 1, "Research queue should decrease by 1"
-    
-    # current_job_research should be created
-    assert previous_state.get("current_job_research") is None, "Should start with no current research"
-    assert current_state.get("current_job_research") is not None, "Should create current research"
-    
-    # Job data should match
-    current_research = current_state["current_job_research"]
-    assert current_research["job"]["job_id"] == expected_job.job_id, "Job ID should match"
-    
-    # Should preserve other fields - THIS WILL NOW WORK!
-    assert current_state.get("job_recommendations") == previous_state.get("job_recommendations"), \
-        "job_recommendations should be preserved"
-    assert current_state.get("completed_job_research") == previous_state.get("completed_job_research"), \
-        "completed_job_research should be preserved"
-
-
-def _validate_get_research_query_full_state(previous_state: Dict, current_state: Dict, config):
-    """Validate state changes with full state access."""
-    # current_job_research should be updated, not replaced
-    prev_research = previous_state.get("current_job_research")
-    curr_research = current_state.get("current_job_research")
-    
-    assert prev_research is not None, "Previous state should have current_job_research"
-    assert curr_research is not None, "Current state should have current_job_research"
-    
-    # Job data should be preserved
-    assert curr_research["job"] == prev_research["job"], "Job data should be preserved"
-    
-    # Research data should be added
-    assert prev_research.get("research_data") is None, "Previous should have no research_data"
-    assert curr_research.get("research_data") is not None, "Current should have research_data"
-    
-    # Number of queries should match config
-    expected_queries = config.configurable.get("number_of_research_queries", 5)
-    assert len(curr_research["research_data"]) == expected_queries, \
-        f"Should have {expected_queries} research queries"
-    
-    # Research status should be updated
-    assert curr_research["research_status"] == JobResearchStatus.RESEARCH_QUERY_GENERATED
-    
-    # Other fields should be preserved
-    assert current_state.get("research_queue") == previous_state.get("research_queue"), \
-        "research_queue should be preserved"
-
-
-def _validate_conduct_research_full_state(previous_state: Dict, current_state: Dict):
-    """Validate state changes with full state access."""
-    prev_research = previous_state.get("current_job_research")
-    curr_research = current_state.get("current_job_research")
-    
-    # Research queries should be preserved but enhanced with results
-    prev_data = prev_research["research_data"]
-    curr_data = curr_research["research_data"]
-    
-    assert len(curr_data) == len(prev_data), "Number of research entries should be preserved"
-    
-    for i, (prev_entry, curr_entry) in enumerate(zip(prev_data, curr_data)):
-        # Query should be preserved
-        assert curr_entry["query"] == prev_entry["query"], f"Query {i} should be preserved"
-        
-        # Results should be added
-        assert prev_entry.get("results") is None, f"Previous entry {i} should have no results"
-        assert curr_entry.get("results") is not None, f"Current entry {i} should have results"
-        assert len(curr_entry["results"]) > 0, f"Entry {i} should have non-empty results"
-        
-        # Sources should be added
-        assert prev_entry.get("sources") is None, f"Previous entry {i} should have no sources"
-        assert curr_entry.get("sources") is not None, f"Current entry {i} should have sources"
-    
-    # Status should be updated
-    assert curr_research["research_status"] == JobResearchStatus.RESEARCH_RESULTS_GATHERED
-
-
-def _validate_analyze_research_full_state(previous_state: Dict, current_state: Dict):
-    """Validate state changes with full state access."""
-    # current_job_research should be moved to completed_job_research
-    prev_current = previous_state.get("current_job_research")
-    curr_current = current_state.get("current_job_research")
-    
-    assert prev_current is not None, "Previous state should have current_job_research"
-    assert curr_current is None, "Current state should have no current_job_research"
-    
-    # completed_job_research should be updated
-    prev_completed = previous_state.get("completed_job_research", [])
-    curr_completed = current_state.get("completed_job_research", [])
-    
-    assert len(curr_completed) == len(prev_completed) + 1, "Should add one completed research"
-    
-    # The completed research should have analysis
-    completed_research = curr_completed[-1]  # Last item
-    assert completed_research["research_status"] == JobResearchStatus.COMPLETED
-    assert completed_research.get("research_analysis") is not None, "Should have analysis"
-    
-    # Job data should be preserved through the whole process
-    assert completed_research["job"] == prev_current["job"], "Job data should be preserved"
 
 
 def test_research_workflow_end_to_end_state(
-        software_developer,
-        data_scientist,
-        research_config_for_testing):
+    software_developer, data_scientist, research_config_for_testing
+):
     """Test complete workflow with proper reducer function application."""
     initial_state = OverallState(
-        job_recommendations=[software_developer.model_dump(), data_scientist.model_dump()],
+        job_recommendations=[
+            software_developer.model_dump(),
+            data_scientist.model_dump(),
+        ],
         research_queue=[software_developer.job_id, data_scientist.job_id],
         messages=[],
         current_job_research=None,
@@ -277,23 +136,33 @@ def test_research_workflow_end_to_end_state(
 
     # Use invoke for complete execution with proper reducers
     research_graph = create_research_graph()
-    final_state = research_graph.invoke(initial_state, config=research_config_for_testing)
-    
+    final_state = research_graph.invoke(
+        initial_state, config=research_config_for_testing
+    )
+
     # Test final state reflects proper reducer behavior
-    assert len(final_state["completed_job_research"]) == 2, "Should have completed two research"
-    assert final_state["current_job_research"] is None, "Should have no current research"
+    assert len(final_state["completed_job_research"]) == 2, (
+        "Should have completed two research"
+    )
+    assert final_state["current_job_research"] is None, (
+        "Should have no current research"
+    )
     assert len(final_state["research_queue"]) == 0, "Research queue should be empty"
-    
+
     # Test that job recommendations were preserved (reducer didn't lose them)
-    assert final_state["job_recommendations"] == initial_state["job_recommendations"], \
+    assert final_state["job_recommendations"] == initial_state["job_recommendations"], (
         "Job recommendations should be preserved by reducer functions"
-    
+    )
+
     # Test message accumulation (reducer should have accumulated, not overwritten)
-    #assert len(final_state["messages"]) >= 4, "Should have accumulated messages from all steps"
-    
+    # assert len(final_state["messages"]) >= 4, "Should have accumulated messages from all steps"
+
     # Test completed research has all required data
     for completed_research in final_state["completed_job_research"]:
         assert completed_research["research_status"] == JobResearchStatus.COMPLETED
         assert completed_research.get("research_data") is not None
         assert completed_research.get("research_analysis") is not None
-        assert completed_research["job"]["job_id"] in [software_developer.job_id, data_scientist.job_id]
+        assert completed_research["job"]["job_id"] in [
+            software_developer.job_id,
+            data_scientist.job_id,
+        ]

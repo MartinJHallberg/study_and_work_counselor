@@ -26,14 +26,15 @@ def product_manager():
         description="A Product Manager oversees the development and delivery of products, ensuring they meet customer needs and business goals.",
     )
 
+
 @pytest.fixture
 def research_config_for_testing():
     """Test configuration with reduced queries for faster tests."""
     return RunnableConfig(
-                configurable={
-                    "max_research_results": 1,
-                    "research_depth": "basic",
-                    "research_include_raw_content": False,
-                    "number_of_research_queries": 2,
-                }
-            )
+        configurable={
+            "max_research_results": 1,
+            "research_depth": "basic",
+            "research_include_raw_content": False,
+            "number_of_research_queries": 2,
+        }
+    )
