@@ -1,7 +1,9 @@
 from langchain_core.tools import tool
 from langchain_tavily import TavilySearch
-from config import config
+from config import get_config
 from langchain_core.runnables import RunnableConfig
+
+config = get_config()
 
 
 @tool
