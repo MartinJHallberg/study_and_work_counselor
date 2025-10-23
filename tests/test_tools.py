@@ -3,10 +3,10 @@ from agent.tools import (
 )
 
 
-def test_simple_web_search():
+def test_simple_web_search(research_config_for_testing):
     query = "Python programming"
-    result = web_search(
-        query, max_results=2, search_depth="shallow", include_raw_content=False
-    )
+    result = web_search.invoke({"query": query}, config=research_config_for_testing)
 
-    assert len(result["results"]) == 2
+    expected = research_config_for_testing["configurable"]["max_research_results"]
+
+    assert len(result["results"]) == expected
