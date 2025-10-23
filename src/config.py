@@ -46,10 +46,4 @@ class Config(BaseSettings):
         )
 
 
-# Lazy loading function
-def get_config() -> Config:
-    """Get the application configuration. Creates it if it doesn't exist."""
-    global _config
-    if "_config" not in globals():
-        _config = Config()
-    return _config
+config = Config()

@@ -27,9 +27,7 @@ from agent.prompts import (
 )
 from langchain_core.messages import AIMessage
 from langchain_core.runnables import RunnableConfig
-from config import get_config
-
-app_config = get_config()
+from config import config as app_config
 
 
 def get_llm():
