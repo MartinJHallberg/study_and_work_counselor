@@ -30,6 +30,7 @@ def test_extract_profile_information_with_minimal_input():
     assert result["profile_information"]["interests"] is not None
     assert result["profile_information"]["personal_characteristics"] is not None
 
+
 @pytest.mark.llm_call
 def test_extract_profile_information_with_previous_data():
     interests = ["technology", "innovation"]
