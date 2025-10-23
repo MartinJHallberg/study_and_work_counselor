@@ -41,7 +41,7 @@ JOB_RECOMMENDATIONS_PROMPT = (
     + """
     Instructions:
     - Based on the user's profile information, recommend suitable job roles that align with their characteristics and preferences.
-    - Suggest at least 10 job roles that fit the user's profile.
+    - Suggest at least {number_of_recommendations} job roles that fit the user's profile.
     - Be mindful of including a wide range of job roles that match different aspects of the user's profile
     - Do not rule out any job due to competencies, focus more on interests and personal characteristics
     - Provide a brief description of each recommended job role and explain why it is a good match for the user's profile.
@@ -52,3 +52,33 @@ JOB_RECOMMENDATIONS_PROMPT = (
     {current_profile_information}
     """
 )
+
+RESEARCH_QUERY_PROMPT = """
+    You are an expert in planning and conducting research about a specific job role.
+    You have a deep understanding of how to best make a comprehensive research plan.
+    You are tasked with creating a list of research queries based on the job roles and their descriptions
+    so that a user can get familiar with what a job entails, what skills are needed, what education that is
+    most common amongst practitioners and what the job market looks like.
+
+    Instructions:
+    - Use the job roles and their descriptions to generate relevant research queries.
+    - Ensure that the research queries are specific and targeted to gather useful information about each job role.
+    - Provide {number_of_queries} research queries for the job role.
+    - Format the research queries as a list of strings.
+    
+    Job role:    {job}
+    Description: {description}
+    """
+
+
+RESEARCH_PROMPT = """
+    You are a research agent. Conduct thorough research on: "{research_query}"
+    
+    Use the available tools to:
+    1. Search for general information
+    2. Look for academic sources if applicable
+    3. Gather diverse perspectives
+    4. Find recent and authoritative sources
+    
+    Be systematic and thorough in your approach.
+    """

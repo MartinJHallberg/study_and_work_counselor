@@ -1,5 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import List
+from enum import StrEnum
+import uuid
 
 
 class StateModel(BaseModel):
@@ -79,19 +81,84 @@ class ProfileQuestions(StateModel):
     )
 
 
-class JobRecommendations(StateModel):
-    job_role: List[str] | None = Field(
-        description="A list of recommended job roles that match the user's profile"
+class Job(BaseModel):
+    job_id: str = Field(
+        default_factory=lambda: str(uuid.uuid4()), description="Unique job identifier"
     )
-    job_role_description: List[str] | None = Field(
-        description="A brief description of each recommended job role"
+    name: str = Field(
+        description="A recommended job role that matches the user's profile"
     )
+    description: str = Field(
+        description="A brief description of the recommended job role"
+    )
+
+
+class JobRecommendationData(StateModel):
+    job: Job = Field(
+        description="A recommended job role that matches the user's profile"
+    )
+
     education: List[str] | None = Field(
-        description="A list of educational paths or qualifications beneficial for each recommended job role"
+        default=None,
+        description="A list of educational paths or qualifications beneficial for the recommended job role",
     )
-    profile_match: List[str] = Field(
-        description="An explanation of why each job role is a good match for the user's profile"
+    profile_match: str | None = Field(
+        description="Explanation of why this job matches the user's profile"
+    )
+
+
+class JobRecommendations(StateModel):
+    job_recommendations: List[JobRecommendationData] = Field(
+        description="A list of job recommendations based on the user's profile"
     )
     summary: str | None = Field(
-        description="A summary of the job recommendations provided and the characteristics of the profile"
+        description="A summary of the personal profile and how it relates to the recommended job roles"
     )
+
+
+class ResearchQueries(StateModel):
+    queries: List[str] = Field(
+        description="A list of research queries based on the job recommendations"
+    )
+
+
+class JobResearchStatus(StrEnum):
+    NOT_STARTED = "Not started"
+    INITIALIZED = "Initialized"
+    RESEARCH_QUERY_GENERATED = "Research query generated"
+    RESEARCH_RESULTS_GATHERED = "Research results gathered"
+    COMPLETED = "Completed"
+    FAILED = "Failed"
+
+
+class JobResearchData(StateModel):
+    query: str | None = Field(
+        default=None, description="A research query based on the job recommendations"
+    )
+    results: List[str] | None = Field(
+        default=None,
+        description="A list of research results obtained from the research query",
+    )
+    sources: List[str] | None = Field(
+        default=None, description="A list of sources for the research results"
+    )
+
+
+class JobResearch(StateModel):
+    job: Job = Field(description="The job role being researched")
+
+    research_data: List[JobResearchData] | None = Field(
+        default=None, description="A list of research data entries related to the job"
+    )
+
+    research_analysis: str | None = Field(
+        default=None, description="An analysis of the research results"
+    )
+
+    research_status: JobResearchStatus = Field(
+        default=JobResearchStatus.NOT_STARTED, description="The status of the research"
+    )
+
+    @property
+    def job_id(self) -> str:
+        return self.job.job_id
