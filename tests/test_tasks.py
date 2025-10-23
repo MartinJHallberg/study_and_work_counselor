@@ -77,7 +77,7 @@ def test_ask_profile_questions_with_minimal_input():
 
 
 @pytest.mark.llm_call
-def test_get_job_recommendations_with_complete_profile():
+def test_get_job_recommendations_with_complete_profile(research_config_for_testing):
     state = OverallState(
         messages=[{"role": "user", "content": MINIMAL_PROFILE_MESSAGE}],
         profile_data={
@@ -95,7 +95,7 @@ def test_get_job_recommendations_with_complete_profile():
         },
     )
 
-    result = get_job_recommendations(state, number_of_recommendations=3)
+    result = get_job_recommendations(state, config=research_config_for_testing)
 
     assert result["messages"] is not None
 
@@ -169,7 +169,7 @@ def test_research_query(software_developer, research_config_for_testing):
 
     state = OverallState(current_job_research=job_research.model_dump())
 
-    result = get_research_query(state, run_config=research_config_for_testing)
+    result = get_research_query(state, config=research_config_for_testing)
 
     assert (
         result["current_job_research"]["research_status"]
