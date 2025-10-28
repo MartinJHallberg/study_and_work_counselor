@@ -111,52 +111,52 @@ def get_profile_sidebar():
     if check_keys:
         raise ValueError(f"ProfileInformation model is missing fields: {', '.join(check_keys)}")
     profile_lines = []
-    for field, label in field_display.items():
-        val = st.session_state.graph_state["profile_information"][field]
 
-        # Format the value for display
-        if val is None:
-            formatted_val = "*Not set*"
-            profile_lines.append(f"**{label}:** *Not set*")
-        elif isinstance(val, list):
-            if val:
-                formatted_val = ", ".join(str(item) for item in val)
-                profile_lines.append(f"**{label}:** {formatted_val}")
-            else:
+    profile_information = st.session_state.graph_state.get("profile_information")
+
+    if profile_information:
+        for field, label in field_display.items():
+            val = st.session_state.graph_state.get("profile_information").get(field)
+
+            # Format the value for display
+            if val is None:
+                formatted_val = "*Not set*"
                 profile_lines.append(f"**{label}:** *Not set*")
-        elif isinstance(val, bool):
-            formatted_val = "Yes" if val else "No"
-            profile_lines.append(f"**{label}:** {formatted_val}")
-        elif val == "":
-            profile_lines.append(f"**{label}:** *Not set*")
-        else:
-            profile_lines.append(f"**{label}:** {str(val)}")
-    st.markdown("\n\n".join(profile_lines))
+            elif isinstance(val, list):
+                if val:
+                    formatted_val = ", ".join(str(item) for item in val)
+                    profile_lines.append(f"**{label}:** {formatted_val}")
+                else:
+                    profile_lines.append(f"**{label}:** *Not set*")
+            elif isinstance(val, bool):
+                formatted_val = "Yes" if val else "No"
+                profile_lines.append(f"**{label}:** {formatted_val}")
+            elif val == "":
+                profile_lines.append(f"**{label}:** *Not set*")
+            else:
+                profile_lines.append(f"**{label}:** {str(val)}")
+        st.markdown("\n\n".join(profile_lines))
 
-    # Profile completeness indicator
-    filled_fields = sum(
-        1
-        for f in field_display.keys()
-        if st.session_state.graph_state.get(f) not in [None, [], ""]
-    )
-    progress = filled_fields / len(field_display)
+        # Profile completeness indicator
+        filled_fields = sum(1 for val in profile_information.values() if val)
+        progress = filled_fields / len(field_display)
 
-    st.divider()
-    st.metric(
-        "Profile Completeness",
-        f"{progress:.1%}",
-        f"{filled_fields}/{len(field_display)} fields",
-    )
-    st.progress(progress)
-
-    # Show pending questions if any
-    if st.session_state.pending_questions:
         st.divider()
-        st.markdown("**Next Questions:**")
-        for i, q in enumerate(st.session_state.pending_questions[:3], 1):
-            st.write(f"{i}. {q}")
-        if len(st.session_state.pending_questions) > 3:
-            st.write(f"... and {len(st.session_state.pending_questions) - 3} more")
+        st.metric(
+            "Profile Completeness",
+            f"{progress:.1%}",
+            f"{filled_fields}/{len(field_display)} fields",
+        )
+        st.progress(progress)
+
+        # Show pending questions if any
+        if st.session_state.pending_questions:
+            st.divider()
+            st.markdown("**Next Questions:**")
+            for i, q in enumerate(st.session_state.pending_questions[:3], 1):
+                st.write(f"{i}. {q}")
+            if len(st.session_state.pending_questions) > 3:
+                st.write(f"... and {len(st.session_state.pending_questions) - 3} more")
 
 
 def get_job_recommendation_sidebar():
