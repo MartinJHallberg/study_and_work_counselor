@@ -2,6 +2,7 @@
 
 import streamlit as st
 from stages import Stage
+from agent.models import ProfileInformation
 
 
 def get_active_button_style(text: str) -> str:
@@ -96,50 +97,55 @@ def left_sidebar_controls():
 def get_profile_sidebar():
     st.markdown("#### 📋 Profile Information")
 
-    # Show profile values per attribute
-    profile_fields = [
-        ("👤 Age", "age"),
-        ("🎯 Interests", "interests"),
-        ("💪 Competencies", "competencies"),
-        ("🧠 Personal Characteristics", "personal_characteristics"),
-        ("💼 Job Preferences", "job_characteristics"),
-        ("📍 Location Focus", "is_locally_focused"),
-    ]
+    field_display = {
+        "age": "👤 Age",
+        "interests": "🎯 Interests",
+        "competencies": "💪 Competencies",
+        "personal_characteristics": "🧠 Personal Characteristics",
+        "job_characteristics": "💼 Job Preferences",
+        "is_locally_focused": "📍 Location Focus",
+    }
 
-    for label, field in profile_fields:
-        val = st.session_state.graph_state.get(field)
+    check_keys = [field for field in field_display.keys() if field not in ProfileInformation.model_fields.keys()]
+
+    if check_keys:
+        raise ValueError(f"ProfileInformation model is missing fields: {', '.join(check_keys)}")
+    profile_lines = []
+    for field, label in field_display.items():
+        val = st.session_state.graph_state["profile_information"][field]
 
         # Format the value for display
         if val is None:
             formatted_val = "*Not set*"
-            st.markdown(f"**{label}:** *Not set*")
+            profile_lines.append(f"**{label}:** *Not set*")
         elif isinstance(val, list):
             if val:
                 formatted_val = ", ".join(str(item) for item in val)
-                st.markdown(f"**{label}:** {formatted_val}")
+                profile_lines.append(f"**{label}:** {formatted_val}")
             else:
-                st.markdown(f"**{label}:** *Not set*")
+                profile_lines.append(f"**{label}:** *Not set*")
         elif isinstance(val, bool):
             formatted_val = "Yes" if val else "No"
-            st.markdown(f"**{label}:** {formatted_val}")
+            profile_lines.append(f"**{label}:** {formatted_val}")
         elif val == "":
-            st.markdown(f"**{label}:** *Not set*")
+            profile_lines.append(f"**{label}:** *Not set*")
         else:
-            st.markdown(f"**{label}:** {str(val)}")
+            profile_lines.append(f"**{label}:** {str(val)}")
+    st.markdown("\n\n".join(profile_lines))
 
     # Profile completeness indicator
     filled_fields = sum(
         1
-        for _, f in profile_fields
+        for f in field_display.keys()
         if st.session_state.graph_state.get(f) not in [None, [], ""]
     )
-    progress = filled_fields / len(profile_fields)
+    progress = filled_fields / len(field_display)
 
     st.divider()
     st.metric(
         "Profile Completeness",
         f"{progress:.1%}",
-        f"{filled_fields}/{len(profile_fields)} fields",
+        f"{filled_fields}/{len(field_display)} fields",
     )
     st.progress(progress)
 

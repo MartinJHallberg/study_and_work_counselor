@@ -64,7 +64,7 @@ class ProfileInformation(StateModel):
     is_locally_focused: bool | None = Field(
         default=None, description="Whether the user is focused on local opportunities"
     )
-    desired_job_characteristics: List[str] | None = Field(
+    job_characteristics: List[str] | None = Field(
         default=None, description="The job characteristics the user is looking for"
     )
     is_profile_complete: bool | None = Field(

@@ -58,10 +58,6 @@ def render_layout():
         with left_col:
             left_sidebar_controls()
 
-        # Right sidebar content
-        with right_col:
-            right_sidebar_controls()
-
         # Main content area
         with main_col:
             # Show normal app interface
@@ -104,6 +100,10 @@ def render_layout():
 
             else:
                 pass
+        
+                # Right sidebar content
+        with right_col:
+            right_sidebar_controls()
 
 
 def main():
