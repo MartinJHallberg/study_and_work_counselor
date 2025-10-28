@@ -6,17 +6,14 @@ from helpers import (
     load_environment,
     init_state,
     check_api_key,
-    stream_user_input,
-    stage_header,
 )
 from controls import (
     render_left_sidebar,
-    right_sidebar_controls,
-    get_job_recommendations_display,
     welcome_screen,
 )
 
 from app.stage_views.profiling import render_profile_view
+from app.stage_views.job_recommendation import render_job_recommendation_view
 
 def setup_page():
     """Configure the Streamlit page."""
@@ -59,6 +56,9 @@ def render_layout():
 
         if st.session_state.stage == Stage.PROFILING:
             render_profile_view(main_col, right_col)
+
+        elif st.session_state.stage == Stage.JOB_RECOMMENDATION:
+            render_job_recommendation_view(main_col, right_col)
         
         else:
             pass

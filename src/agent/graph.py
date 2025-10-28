@@ -61,8 +61,8 @@ def create_main_graph(checkpointer: BaseCheckpointSaver = None):
     builder.add_edge(START, "extract_profile_information")
     builder.add_conditional_edges(
         "extract_profile_information",
-        lambda state: state.get("do_profiling", True),
-        {True: "ask_profile_questions", False: "get_job_recommendations"},
+        lambda state: state.get("is_profile_complete", False),
+        {False: "ask_profile_questions", True: "get_job_recommendations"},
     )
 
     builder.add_edge("get_job_recommendations", "research_workflow")
