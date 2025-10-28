@@ -5,7 +5,7 @@ from langchain_core.messages import HumanMessage, AIMessage
 from agent.graph import graph
 import os
 from dotenv import load_dotenv
-from stages import Stage
+from app.stage_views.stage import Stage
 
 
 def load_environment():
@@ -31,39 +31,6 @@ def init_state():
     if "intro_shown" not in st.session_state:
         st.session_state.intro_shown = False
 
-
-def add_profiling_intro():
-    """Add intro message for profiling stage if not already shown."""
-    if (
-        not st.session_state.intro_shown
-        and st.session_state.stage == Stage.PROFILING
-        and st.session_state.app_started
-    ):
-        intro_message = {
-            "role": "assistant",
-            "content": """👋 **Welcome to the Profiling Stage!**
-
-I'm here to help you discover career opportunities that match your interests, skills, and goals. 
-
-**What we'll do together:**
-- Explore your interests, skills, and career preferences
-- Discuss your educational background and work experience
-- Identify your ideal work environment and goals
-- Build a comprehensive profile for personalized recommendations
-
-**💡 Tips for better results:**
-- **Be specific** about your interests and what excites you
-- **Include both technical and soft skills** you possess or want to develop
-- **Mention any work experience or education** you have
-- **Share your career goals and preferences** (remote work, team size, industry, etc.)
-- **Don't worry about being perfect** - we can refine details as we go
-
-**Ready to start?** Just tell me about yourself, your interests, or ask me any questions about career planning!""",
-        }
-        st.session_state.chat_history.append(intro_message)
-        st.session_state.intro_shown = True
-
-
 def check_api_key():
     """Check if OpenAI API key is available in .env file, fail if not."""
     if not os.getenv("OPENAI_API_KEY"):
@@ -81,6 +48,18 @@ def check_api_key():
         **Note:** Make sure to add `.env` to your `.gitignore` file to keep your API key secure.
         """)
         st.stop()  # Stop execution completely
+
+
+def chat_interface():
+    """Render the chat interface."""
+    # Create scrollable chat container with fixed height
+    with st.container(height=600):
+        # Display existing chat
+        for message in st.session_state.chat_history:
+            if message["role"] == "user":
+                st.chat_message("user").write(message["content"])
+            else:
+                st.chat_message("assistant").write(message["content"])
 
 
 def stream_user_input(user_input: str):
@@ -136,11 +115,13 @@ def stream_user_input(user_input: str):
     st.session_state.chat_history = new_chat_history
     st.session_state.graph_state = state
 
+def main_column_header():
+    """Display the main column header."""
+    st.title("🎓 Study & Work Counselor")
+
 
 def stage_header():
     """Display the current stage header."""
-    # Add intro message for profiling stage if needed
-    add_profiling_intro()
 
     if st.session_state.stage == Stage.PROFILING:
         st.markdown("### 🔍 Profiling Stage")

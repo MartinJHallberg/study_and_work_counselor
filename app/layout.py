@@ -1,7 +1,7 @@
 """Layout and main app structure for the Streamlit app."""
 
 import streamlit as st
-from stages import Stage
+from app.stage_views.stage import Stage
 from helpers import (
     load_environment,
     init_state,
@@ -10,14 +10,13 @@ from helpers import (
     stage_header,
 )
 from controls import (
-    left_sidebar_controls,
+    render_left_sidebar,
     right_sidebar_controls,
-    chat_interface,
     get_job_recommendations_display,
     welcome_screen,
-    get_profile_display,
 )
 
+from app.stage_views.profiling import render_profile_view
 
 def setup_page():
     """Configure the Streamlit page."""
@@ -56,54 +55,13 @@ def render_layout():
 
         # Left sidebar content
         with left_col:
-            left_sidebar_controls()
+            render_left_sidebar()
 
-        # Main content area
-        with main_col:
-            # Show normal app interface
-            st.title("🎓 Study & Work Counselor")
-            stage_header()
-
-            # Chat interface
-            chat_interface()
-
-            # Show thinking indicator if processing
-            if st.session_state.get("processing", False):
-                with st.chat_message("assistant"):
-                    st.markdown("🤔 **Thinking...**")
-
-            # Chat input
-            if user_input := st.chat_input("Your message"):
-                # Immediately show user message and set processing state
-                st.session_state.chat_history.append(
-                    {"role": "user", "content": user_input}
-                )
-                st.session_state.processing = True
-                st.rerun()
-
-            # Process any pending input
-            if st.session_state.processing and st.session_state.chat_history:
-                last_message = st.session_state.chat_history[-1]
-                if last_message["role"] == "user":
-                    # Process the most recent user message
-                    stream_user_input(last_message["content"])
-                    st.session_state.processing = False
-                    st.rerun()
-
-            # Profile display
-            if st.session_state.stage == Stage.PROFILING:
-                get_profile_display()
-
-            # Job recommendations display
-            elif st.session_state.stage == Stage.JOB_RECOMMENDATION:
-                get_job_recommendations_display()
-
-            else:
-                pass
+        if st.session_state.stage == Stage.PROFILING:
+            render_profile_view(main_col, right_col)
         
-                # Right sidebar content
-        with right_col:
-            right_sidebar_controls()
+        else:
+            pass
 
 
 def main():
