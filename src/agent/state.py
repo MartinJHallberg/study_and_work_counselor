@@ -5,6 +5,7 @@ import operator
 
 class OverallState(TypedDict):
     messages: Annotated[list, add_messages]
+    stage: str
     profile_information: dict | None
     job_recommendations: list[dict] | None
     current_job_research: dict | None

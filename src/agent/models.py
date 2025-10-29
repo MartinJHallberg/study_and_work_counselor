@@ -3,6 +3,17 @@ from typing import List
 from enum import StrEnum
 import uuid
 
+from enum import StrEnum
+
+
+class Stage(StrEnum):
+    PROFILING = "profiling"
+    ASK_PROFILE_QUESTIONS = "ask_profile_questions"
+    JOB_RECOMMENDATION = "job_recommendation"
+    JOB_RESEARCH = "job_research"
+    END  = "end"
+
+
 
 class StateModel(BaseModel):
     pass

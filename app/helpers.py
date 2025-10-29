@@ -2,7 +2,7 @@
 
 import streamlit as st
 from langchain_core.messages import HumanMessage, AIMessage
-from agent.graph import graph
+from agent.graph import get_profiling_graph
 import os
 from dotenv import load_dotenv
 from app.stage_views.stage import Stage
@@ -65,6 +65,7 @@ def chat_interface():
 def stream_user_input(user_input: str):
     """Send user input through the langgraph and update session state."""
     state = st.session_state.graph_state
+    graph = get_profiling_graph()
 
     # Convert existing dict messages to LangChain message objects for compatibility
     normalized_messages = []

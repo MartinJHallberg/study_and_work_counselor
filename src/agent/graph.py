@@ -10,8 +10,18 @@ from agent.tasks import (
 )
 from langgraph.graph import StateGraph
 from agent.state import OverallState
-
+from models import Stage
 from langgraph.checkpoint.base import BaseCheckpointSaver
+
+
+def next_stage(state):
+    stage = state["stage"]
+    return {
+        Stage.PROFILING: Stage.ASK_PROFILE if state.get("missing_fields") else Stage.RECOMMEND,
+        Stage.ASK_PROFILE: Stage.RECOMMEND,
+        Stage.RECOMMEND: Stage.RESEARCH,
+        Stage.RESEARCH: END,
+    }.get(stage, END)
 
 
 def continue_research(state: OverallState) -> bool:
@@ -42,10 +52,8 @@ def create_research_graph(checkpointer: BaseCheckpointSaver = None) -> StateGrap
         return research_builder.compile(checkpointer=checkpointer)
     else:
         return research_builder.compile()
-
-
-def create_main_graph(checkpointer: BaseCheckpointSaver = None):
-    """Create the main application graph."""
+    
+def get_profiling_graph():
     builder = StateGraph(OverallState)
 
     # Create nodes
@@ -53,26 +61,12 @@ def create_main_graph(checkpointer: BaseCheckpointSaver = None):
     builder.add_node("ask_profile_questions", ask_profile_questions)
     builder.add_node("get_job_recommendations", get_job_recommendations)
 
-    # Add research subgraph
-    research_subgraph = create_research_graph(checkpointer=checkpointer)
-    builder.add_node("research_workflow", research_subgraph)
-
-    # Define the overall flow
+    # Define the profiling flow
     builder.add_edge(START, "extract_profile_information")
     builder.add_conditional_edges(
         "extract_profile_information",
         lambda state: state.get("is_profile_complete", False),
-        {False: "ask_profile_questions", True: "get_job_recommendations"},
+        {False: "ask_profile_questions", True: END},
     )
 
-    builder.add_edge("get_job_recommendations", "research_workflow")
-    builder.add_edge("research_workflow", END)
-
-    if checkpointer:
-        return builder.compile(checkpointer=checkpointer)
-    else:
-        return builder.compile()
-
-
-# Default graph for production (no checkpointer)
-graph = create_main_graph()
+    return builder.compile()
