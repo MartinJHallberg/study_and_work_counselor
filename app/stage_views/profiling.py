@@ -1,5 +1,5 @@
 import streamlit as st
-from app.helpers import stream_user_input, main_column_header
+from helpers import stream_user_input, main_column_header
 from agent.models import MainNode as Stage
 from agent.models import ProfileInformation
 

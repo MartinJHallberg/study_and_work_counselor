@@ -8,8 +8,8 @@ from helpers import (
     check_api_key,
 )
 
-from app.stage_views.profiling import render_profile_view
-from app.stage_views.job_recommendation import render_job_recommendation_view
+from stage_views.profiling import render_profile_view
+from stage_views.job_recommendation import render_job_recommendation_view
 
 def setup_page():
     """Configure the Streamlit page."""
