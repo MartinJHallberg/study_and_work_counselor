@@ -10,42 +10,47 @@ from agent.tasks import (
 )
 from langgraph.graph import StateGraph
 from agent.state import OverallState
-from models import Stage
+from agent.models import MainNode, SubNode
 from langgraph.checkpoint.base import BaseCheckpointSaver
-
-
-def next_stage(state):
-    stage = state["stage"]
-    return {
-        Stage.PROFILING: Stage.ASK_PROFILE if state.get("missing_fields") else Stage.RECOMMEND,
-        Stage.ASK_PROFILE: Stage.RECOMMEND,
-        Stage.RECOMMEND: Stage.RESEARCH,
-        Stage.RESEARCH: END,
-    }.get(stage, END)
 
 
 def continue_research(state: OverallState) -> bool:
     return state.get("research_queue") is not None and len(state["research_queue"]) > 0
 
 
+def create_profiling_graph():
+    builder = StateGraph(OverallState)
+
+    # Create nodes
+    builder.add_node(SubNode.EXTRACT_PROFILE_INFORMATION, extract_profile_information)
+    builder.add_node(SubNode.ASK_PROFILE_QUESTIONS, ask_profile_questions)
+
+    # Define the profiling flow
+    builder.add_edge(START, SubNode.EXTRACT_PROFILE_INFORMATION)
+    builder.add_edge(
+        SubNode.EXTRACT_PROFILE_INFORMATION, SubNode.ASK_PROFILE_QUESTIONS
+    )
+
+    return builder.compile()
+
 # Get research subgraph
 def create_research_graph(checkpointer: BaseCheckpointSaver = None) -> StateGraph:
     research_builder = StateGraph(OverallState)
 
-    research_builder.add_node("start_job_research", start_job_research)
-    research_builder.add_node("get_research_query", get_research_query)
-    research_builder.add_node("conduct_research", conduct_research)
-    research_builder.add_node("analyze_research", analyze_research)
+    research_builder.add_node(SubNode.START_JOB_RESEARCH, start_job_research)
+    research_builder.add_node(SubNode.GET_RESEARCH_QUERY, get_research_query)
+    research_builder.add_node(SubNode.CONDUCT_RESEARCH, conduct_research)
+    research_builder.add_node(SubNode.ANALYZE_RESEARCH, analyze_research)
 
     # Define the research flow
-    research_builder.add_edge(START, "start_job_research")
-    research_builder.add_edge("start_job_research", "get_research_query")
-    research_builder.add_edge("get_research_query", "conduct_research")
-    research_builder.add_edge("conduct_research", "analyze_research")
+    research_builder.add_edge(START, SubNode.START_JOB_RESEARCH)
+    research_builder.add_edge(SubNode.START_JOB_RESEARCH, SubNode.GET_RESEARCH_QUERY)
+    research_builder.add_edge(SubNode.GET_RESEARCH_QUERY, SubNode.CONDUCT_RESEARCH)
+    research_builder.add_edge(SubNode.CONDUCT_RESEARCH, SubNode.ANALYZE_RESEARCH)
     research_builder.add_conditional_edges(
-        "analyze_research",
+        SubNode.ANALYZE_RESEARCH,
         continue_research,
-        {True: "start_job_research", False: END},
+        {True: SubNode.START_JOB_RESEARCH, False: END},
     )
 
     if checkpointer:
@@ -53,20 +58,24 @@ def create_research_graph(checkpointer: BaseCheckpointSaver = None) -> StateGrap
     else:
         return research_builder.compile()
     
-def get_profiling_graph():
+
+
+def create_main_graph(checkpointer: BaseCheckpointSaver = None):
+    """Create the main application graph."""
     builder = StateGraph(OverallState)
 
     # Create nodes
-    builder.add_node("extract_profile_information", extract_profile_information)
-    builder.add_node("ask_profile_questions", ask_profile_questions)
-    builder.add_node("get_job_recommendations", get_job_recommendations)
+    builder.add_node(MainNode.PROFILING, create_profiling_graph())
+    builder.add_node(MainNode.JOB_RECOMMENDATION, get_job_recommendations)
+    builder.add_node(MainNode.JOB_RESEARCH, create_research_graph(checkpointer=checkpointer))
 
-    # Define the profiling flow
-    builder.add_edge(START, "extract_profile_information")
-    builder.add_conditional_edges(
-        "extract_profile_information",
-        lambda state: state.get("is_profile_complete", False),
-        {False: "ask_profile_questions", True: END},
-    )
+    # Define the overall flow
+    builder.add_edge(START, MainNode.PROFILING)
+    builder.add_edge(MainNode.PROFILING, MainNode.JOB_RECOMMENDATION)
+    builder.add_edge(MainNode.JOB_RECOMMENDATION, MainNode.JOB_RESEARCH)
+    builder.add_edge(MainNode.JOB_RESEARCH, END)
 
-    return builder.compile()
+    if checkpointer:
+        return builder.compile(checkpointer=checkpointer)
+    else:
+        return builder.compile()

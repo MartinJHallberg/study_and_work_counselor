@@ -2,10 +2,10 @@
 
 import streamlit as st
 from langchain_core.messages import HumanMessage, AIMessage
-from agent.graph import get_profiling_graph
+from agent.graph import create_main_graph
 import os
 from dotenv import load_dotenv
-from app.stage_views.stage import Stage
+from agent.models import MainNode as Stage
 
 
 def load_environment():
@@ -50,35 +50,31 @@ def check_api_key():
         st.stop()  # Stop execution completely
 
 
-def chat_interface():
-    """Render the chat interface."""
-    # Create scrollable chat container with fixed height
-    with st.container(height=600):
-        # Display existing chat
-        for message in st.session_state.chat_history:
-            if message["role"] == "user":
-                st.chat_message("user").write(message["content"])
+def normalize_messages(messages):
+    """Convert messages to a consistent format."""
+    normalized = []
+    for m in messages:
+        if isinstance(m, (HumanMessage, AIMessage)):
+            normalized.append(m)
+        else:
+            role = m.get("role") if isinstance(m, dict) else None
+            content = m.get("content") if isinstance(m, dict) else str(m)
+            if role == "user":
+                normalized.append(HumanMessage(content=content))
             else:
-                st.chat_message("assistant").write(message["content"])
+                normalized.append(AIMessage(content=content))
+    return normalized
+
 
 
 def stream_user_input(user_input: str):
     """Send user input through the langgraph and update session state."""
     state = st.session_state.graph_state
-    graph = get_profiling_graph()
+    graph = create_main_graph()
 
     # Convert existing dict messages to LangChain message objects for compatibility
-    normalized_messages = []
-    for m in state.get("messages", []):
-        if isinstance(m, (HumanMessage, AIMessage)):
-            normalized_messages.append(m)
-        else:
-            role = m.get("role") if isinstance(m, dict) else None
-            content = m.get("content") if isinstance(m, dict) else str(m)
-            if role == "user":
-                normalized_messages.append(HumanMessage(content=content))
-            else:
-                normalized_messages.append(AIMessage(content=content))
+    normalized_messages = normalize_messages(state.get("messages", []))
+
     state["messages"] = normalized_messages + [HumanMessage(content=user_input)]
 
     for event in graph.stream(state):

@@ -6,13 +6,18 @@ import uuid
 from enum import StrEnum
 
 
-class Stage(StrEnum):
+class MainNode(StrEnum):
     PROFILING = "profiling"
-    ASK_PROFILE_QUESTIONS = "ask_profile_questions"
     JOB_RECOMMENDATION = "job_recommendation"
     JOB_RESEARCH = "job_research"
-    END  = "end"
 
+class SubNode(StrEnum):
+    EXTRACT_PROFILE_INFORMATION = "extract_profile_information"
+    ASK_PROFILE_QUESTIONS = "ask_profile_questions"
+    START_JOB_RESEARCH = "start_job_research"
+    GET_RESEARCH_QUERY = "get_research_query"
+    CONDUCT_RESEARCH = "conduct_research"
+    ANALYZE_RESEARCH = "analyze_research"
 
 
 class StateModel(BaseModel):

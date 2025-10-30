@@ -1,16 +1,16 @@
 import streamlit as st
-from app.helpers import stream_user_input, chat_interface, main_column_header
-from app.stage_views.stage import Stage
+from app.helpers import stream_user_input, main_column_header
+from agent.models import MainNode as Stage
 from agent.models import ProfileInformation
 
 def add_profiling_intro():
     """Add intro message for profiling stage if not already shown."""
-    if (
-        not st.session_state.intro_shown
-        and st.session_state.stage == Stage.PROFILING
-        and st.session_state.app_started
-    ):
-        intro_message = {
+    # if (
+    #     not st.session_state.intro_shown
+    #     and st.session_state.stage == Stage.PROFILING
+    #     and st.session_state.app_started
+    # ):
+    intro_message = {
             "role": "assistant",
             "content": """👋 **Welcome to the Profiling Stage!**
 
@@ -31,8 +31,20 @@ I'm here to help you discover career opportunities that match your interests, sk
 
 **Ready to start?** Just tell me about yourself, your interests, or ask me any questions about career planning!""",
         }
-        st.session_state.chat_history.append(intro_message)
-        st.session_state.intro_shown = True
+    st.session_state.chat_history.append(intro_message)
+    st.session_state.intro_shown = True
+
+
+def chat_interface():
+    """Render the chat interface."""
+    # Create scrollable chat container with fixed height
+    with st.container(height=600):
+        # Display existing chat
+        for message in st.session_state.chat_history:
+            if message["role"] == "user":
+                st.chat_message("user").write(message["content"])
+            else:
+                st.chat_message("assistant").write(message["content"])
 
 
 
@@ -40,7 +52,9 @@ def render_main_column():
     main_column_header()
     st.markdown("### 🔍 Profiling Stage")
 
-    add_profiling_intro()
+    if not st.session_state.intro_shown:
+        add_profiling_intro()
+
     # Chat interface
     chat_interface()
 
@@ -59,13 +73,13 @@ def render_main_column():
         st.rerun()
 
     # Process any pending input
-    if st.session_state.processing and st.session_state.chat_history:
-        last_message = st.session_state.chat_history[-1]
-        if last_message["role"] == "user":
-            # Process the most recent user message
-            stream_user_input(last_message["content"])
-            st.session_state.processing = False
-            st.rerun()
+    # if st.session_state.processing and st.session_state.chat_history:
+    #     last_message = st.session_state.chat_history[-1]
+    #     if last_message["role"] == "user":
+    #         # Process the most recent user message
+    #         stream_user_input(last_message["content"])
+    #         st.session_state.processing = False
+    #         st.rerun()
 
     render_display()
 

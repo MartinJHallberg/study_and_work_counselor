@@ -1,5 +1,5 @@
 import streamlit as st
-from agent.graph import graph
+from agent.graph import create_main_graph
 
 
 @st.dialog("Job Explorer")
