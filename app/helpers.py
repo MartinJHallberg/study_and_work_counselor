@@ -65,7 +65,9 @@ def normalize_messages(messages):
                 normalized.append(AIMessage(content=content))
     return normalized
 
+def stream_chat_answer(user_input: str):
 
+    state = st.session_state.graph_state
 
 def stream_user_input(user_input: str):
     """Send user input through the langgraph and update session state."""

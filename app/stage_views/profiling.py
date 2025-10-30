@@ -2,6 +2,7 @@ import streamlit as st
 from helpers import stream_user_input, main_column_header
 from agent.models import MainNode as Stage
 from agent.models import ProfileInformation
+from controls import run_stage
 
 def add_profiling_intro():
     """Add intro message for profiling stage if not already shown."""
@@ -73,13 +74,17 @@ def render_main_column():
         st.rerun()
 
     # Process any pending input
-    # if st.session_state.processing and st.session_state.chat_history:
-    #     last_message = st.session_state.chat_history[-1]
-    #     if last_message["role"] == "user":
-    #         # Process the most recent user message
-    #         stream_user_input(last_message["content"])
-    #         st.session_state.processing = False
-    #         st.rerun()
+    if st.session_state.processing and st.session_state.chat_history:
+
+        run_stage(st.session_state.stage, st.session_state.graph_state)
+        st.session_state.processing = False
+        st.rerun()
+        # last_message = st.session_state.chat_history[-1]
+        # if last_message["role"] == "user":
+        #     # Process the most recent user message
+        #     stream_user_input(last_message["content"])
+        #     st.session_state.processing = False
+        #     st.rerun()
 
     render_display()
 
